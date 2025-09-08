@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "title": "Getting Started with Angular 17",
+    "excerpt": "Learn the new features and improvements in Angular 17, including standalone components and the new control flow syntax.",
+    "content": "Angular 17 brings exciting new features including standalone components, new control flow syntax with @if and @for, and improved performance. This comprehensive guide will walk you through all the major updates and how to implement them in your projects.",
+    "date": "2024-01-15",
+    "author": "Ash",
+    "tags": ["Angular", "TypeScript", "Web Development"],
+    "featuredImage": "https://placehold.co/600x400/1f2937/ffffff?text=Angular+17",
+    "slug": "getting-started-with-angular-17"
+  },
+  {
+    "id": "2",
+    "title": "Building Responsive Layouts with CSS Grid",
+    "excerpt": "Master CSS Grid to create flexible and responsive web layouts that work across all devices.",
+    "content": "CSS Grid is a powerful layout system that allows you to create complex, responsive layouts with ease. Learn how to use grid-template-areas, grid-gap, and other essential properties to build modern web interfaces.",
+    "date": "2024-01-10",
+    "author": "Ash",
+    "tags": ["CSS", "Web Design", "Responsive Design"],
+    "featuredImage": "https://placehold.co/600x400/1f2937/ffffff?text=CSS+Grid",
+    "slug": "building-responsive-layouts-with-css-grid"
+  },
+  {
+    "id": "3",
+    "title": "TypeScript Best Practices",
+    "excerpt": "Discover essential TypeScript patterns and practices to write more maintainable and type-safe code.",
+    "content": "TypeScript has become essential for modern web development. This article covers advanced types, utility types, proper error handling, and architectural patterns that will make your TypeScript code more robust and maintainable.",
+    "date": "2024-01-05",
+    "author": "Ash",
+    "tags": ["TypeScript", "JavaScript", "Best Practices"],
+    "featuredImage": "https://placehold.co/600x400/1f2937/ffffff?text=TypeScript",
+    "slug": "typescript-best-practices"
+  }
+]
