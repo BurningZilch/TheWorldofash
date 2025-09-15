@@ -169,6 +169,15 @@ hr {
   color: #666;         /* softer gray */
 }
 
+ .hero {
+    text-align: center;
+    margin: 4rem 0 2rem;
+  }
+
+  .tagline {
+    font-size: 1.3rem;
+    color: rgb(var(--gray));
+  }
 /* Dark mode variables */
 .dark {
 	--accent: #9bbcff;

@@ -1,21 +1,36 @@
 ---
-import AboutHeroImage from '../assets/blog-placeholder-about.jpg';
+import AboutHeroImage from '../assets/img/blog-about.png';
 import Layout from '../layouts/BlogPost.astro';
 ---
 
 <Layout
-	title="About Me"
+	title="About"
 	description="Lorem ipsum dolor sit amet"
 	pubDate={new Date('August 08 2021')}
 	heroImage={AboutHeroImage}
 >
-<p>
-  Welcome to my personal Astro Blog page.  
-  My name is 
-  <span class="name">
-    <ruby>毕<rt>Bì</rt></ruby><ruby>真<rt>Zhēn</rt></ruby>
-  </span>.
-</p>
+  <p>
+    My name is 
+    <span class="name">
+      <ruby>毕<rt>Bì</rt></ruby><ruby>真<rt>Zhēn</rt></ruby>
+    </span>, but you can also call me Ash.  
+    I enjoy exploring the intersections of technology, design, and creativity.  
+    This blog is where I share experiments in cybersecurity, interaction design, and coding — as well as document what I learn along the way.
+  </p>
 
+  <p>
+    I graduated with a Bachelor of Information Technology from the University of Technology Sydney, where I focused on cybersecurity, networking, and interaction design.  
+    My projects ranged from digital forensics challenges to prototyping interactive media, giving me both a technical and creative foundation.
+  </p>
 
+  <p>
+    Right now, I’m researching ways to connect my experience in interaction design, cybersecurity, and machine learning.  
+    Updates about these projects will be posted on the <a href="/project">Projects</a> page.
+  </p>
+
+  <p>
+    In the meantime, I’m also looking for opportunities in the IT field.  
+    If you enjoy my website or know of a position that might be a good fit, please feel free to reach out at  
+    <a href="mailto:ashzhenbi@gmail.com">ashzhenbi@gmail.com</a>.
+  </p>
 </Layout>
