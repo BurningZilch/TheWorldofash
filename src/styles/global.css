@@ -154,6 +154,21 @@ hr {
 	white-space: nowrap;
 }
 
+.name {
+  font-size: 2rem;     /* make your name big */
+  font-weight: bold;   /* make it stand out */
+  margin-left: 0.5rem; /* little spacing */
+}
+
+.name ruby {
+  margin: 0 0.2rem;    /* space between characters */
+}
+
+.name rt {
+  font-size: 0.6em;    /* keep furigana smaller */
+  color: #666;         /* softer gray */
+}
+
 /* Dark mode variables */
 .dark {
 	--accent: #9bbcff;
