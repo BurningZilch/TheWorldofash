@@ -1,0 +1,30 @@
+---
+const { text = "Support me on Ko-fi ☕" } = Astro.props;
+---
+
+<a 
+  class="kofi-btn" 
+  href="https://ko-fi.com/ashash27756" 
+  target="_blank" 
+  rel="noopener noreferrer"
+>
+  {text}
+</a>
+
+<style>
+  .kofi-btn {
+    display: inline-block;
+    background: #ff5e5b;
+    color: #fff;
+    padding: 0.7em 1.2em;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.2s ease;
+    font-size: 1rem;
+  }
+  .kofi-btn:hover {
+    background: #e14e4a;
+  }
+</style>
+
