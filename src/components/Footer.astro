@@ -1,5 +1,6 @@
 ---
 const today = new Date();
+import KofiButton from "./KofiButton.astro";
 ---
 
 <footer>
@@ -40,18 +41,7 @@ const today = new Date();
 			>
 		</a>
 	</div>
-		<!-- Ko-fi button -->
-	<div class="support">
-		<a 
-			class="kofi-btn" 
-			href="https://ko-fi.com/ashash27756" 
-			target="_blank" 
-			rel="noopener noreferrer"
-		>
-			☕ Support me on Ko-fi
-		</a>
-	</div>
-
+	<KofiButton>	
 </footer>
 <style>
 	footer {
