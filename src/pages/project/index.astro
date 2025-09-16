@@ -5,9 +5,9 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
-import FormattedDate from '../../components/FormattedDate.astro';
+//import FormattedDate from '../../components/FormattedDate.astro';
 
-const project = (await getCollection('project')).sort(
+const project_posts = (await getCollection('project')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 ---
@@ -24,14 +24,15 @@ const project = (await getCollection('project')).sort(
         <h1>Projects</h1>
         <ul>
           {
-            project.map((project) => (
+            project_posts.map((project) => (
               <li>
                 <a href={`/project/${project.id}/`}>
                   {project.data.heroImage && (
-                    <Image width={720} height={360} src={project.data.heroImage} alt="" />
+                    <Image hth={720} height={360} src={project.data.heroImage} alt="" />
                   )}
                   <h4>{project.data.title}</h4>
-                  <p>{project.data.pubDate.toDateString()}</p>
+		  <!---		  <p class="date"> <FormattedDate date={project.data.pubDate} /> ---> 
+		  </p>
                 </a>
               </li>
             ))
