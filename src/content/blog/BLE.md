@@ -1,9 +1,11 @@
 ---
 title: "Using MATLAB to simulate BLE with multipath fading with interference and machine learning"
-thumbnail-img: ../../assets/img/BLE.png
-share-img: ../../assets/img/BLE.png
+thumbnailimg: ../../assets/img/BLE.png
+description: 'Lorem ipsum dolor sit amet'
+shareimg: ../../assets/img/BLE.png
 tags: [MATLAB, BLE, Machine Learning]
-date: Nov 25 2024
+heroImage: '../../assets/blog-placeholder-3.jpg'
+pubDate: 'Nov 25 2024'
 author: Ash
 ---
 I just made this for my university assignment, a simulation project that analyzes how BLE jamming affects machine learning models trained to process BLE data. Using MATLAB, I built and evaluated models that demonstrate the impact of interference. I will go through the development process of this project in this blog.

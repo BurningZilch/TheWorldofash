@@ -3,8 +3,8 @@ title: "A Guide to Using GrovePi+ in 2024"
 heroImage: '../../assets/img/Grovepiplus.png'
 pubDate: 'Jun 04 2024'
 description: 'GrovePi+ with legacy screen display image support'
-thumbnail-img: '../../assets/img/Grovepiplus.png'
-share-img: '../../assets/img/Grovepiplus.png'
+thumbnailimg: '../../assets/img/Grovepiplus.png'
+shareimg: '../../assets/img/Grovepiplus.png'
 tags: [GrovePi+, RaspberryPi, Python]
 author: Ash
 ---
