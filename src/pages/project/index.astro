@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import FormattedDate from '../../components/FormattedDate.astro';
+import GoogleTag from '../components/GoogleTag.astro';
 
 const project_posts = (await getCollection('project')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -15,9 +16,11 @@ const project_posts = (await getCollection('project')).sort(
 <!doctype html>
 <html lang="en">
   <head>
+		<GoogleTag />
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
   <body>
+		<GoogleTag />
     <Header />
     <main>
       <section>
