@@ -3,7 +3,7 @@ title: "How to use you-get/yt-dlp to download video on linux or windows"
 description: 'Download video from youtube,instagram etc'
 tags: [you-get]
 pubDate: 'Jun 08 2024'
-heroImage: '../../assets/img/Grovepiplus.png'
+heroImage: '../../assets/img/Youtube.png'
 author: Ash
 ---
 You-get is a powerful tool to download video from website such as Youtube, Bilibili, etc. I use this to share video to my friends so they do not have to download their app.
@@ -17,11 +17,11 @@ Before you start, you should have python >= 3.74 and ffmpeg install on your mach
 # Install in Windows
 **update** now [yt-dlp](https://github.com/yt-dlp/yt-dlp) have a stand alone exe file for windows, you can download it and put it in your path rather than using pip
 Press **win+r** and type cmd to open Terminal, then type **pip install you-get**, then set up path by search environment variable
-![envir](/assets/img/envir.png)
+![envir](../../assets/img/envir.png)
 Then click Environment Variables button, edit Path in System variable if you want to install for all user, edit Path in User variables if you jusut want to install it for youself
 At the new window pops up, select New to put the path of python script downloaded by pi in there, it will be something looks like this:
 `C:\Users\17902\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts`
-![envir2](/assets/img/envir2.png)
+![envir2](../../assets/img/envir2.png)
 restart the terminal, the you-get is ready to go.
 # Install in Linux
 First, clone the repository it from github in linux terminal 

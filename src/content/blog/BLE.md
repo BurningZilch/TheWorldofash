@@ -1,10 +1,10 @@
 ---
 title: "Using MATLAB to simulate BLE with multipath fading with interference and machine learning"
 thumbnailimg: ../../assets/img/BLE.png
-description: 'Lorem ipsum dolor sit amet'
+description: 'It is my last univeristy proejct'
 shareimg: ../../assets/img/BLE.png
 tags: [MATLAB, BLE, Machine Learning]
-heroImage: '../../assets/blog-placeholder-3.jpg'
+heroImage: '../../assets/img/BLE.png'
 pubDate: 'Nov 25 2024'
 author: Ash
 ---
@@ -33,7 +33,7 @@ In order to make this project works, I decide to follow the path of Kent Beck: M
 
 My teammate Eli created a file called `bigeli.stl` as a testing environment—a simple room with one wall. I decided to use **ray tracing** to calculate the **multipath fading model** for path loss. To test this, I placed two BLE devices in the room.  
 
-![eliroom](/assets/img/eliroom.png)
+![eliroom](../../assets/img/eliroom.png)
 
 To build the foundation of this simulation, I modified MATLAB example code and created three main classes:
 
@@ -50,17 +50,17 @@ After proving the concept worked, I refined the simulation to make it more reali
 **Adding Noise and Jamming**:  
    I integrated interference signals into the connection channel to simulate **jamming interference**. This required creating a jammer class that added controlled noise to the BLE waveform.
 
-![BLEattack](/assets/img/BLEattack.png)
+![BLEattack](../../assets/img/BLEattack.png)
 
 **Realistic RSSI Calculations**:  
    I updated the RSSI calculations to include real-world factors like environmental noise, signal reflections, and fading. This made the simulation results closer to what BLE devices experience in practice.
 
-![resultwave](/assets/img/resultwave.png)
+![resultwave](../../assets/img/resultwave.png)
 
 **Improved Model Training**:  
    With the updated dataset, I trained a **Convolutional Neural Network (CNN)** in addition to the RF model. The CNN was designed to capture more intricate patterns in the BLE data, making it potentially more resilient to interference. Due to the time limit, the ML model did not works well, but the experiment still shows the potential for affect ML using simulations BLE with jamming interference 
 
-![result3d](/assets/img/result3d.png)
+![result3d](../../assets/img/result3d.png)
 
 
 Feel free to comment or reach out with questions—I’d love to hear your thoughts!
