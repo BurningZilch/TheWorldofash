@@ -9,13 +9,21 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.4",
+    "@astrojs/mdx": "^4.3.5",
+    "@astrojs/react": "^4.3.1",
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.5.1",
     "@sentry/astro": "^10.11.0",
     "@spotlightjs/astro": "^3.2.6",
     "@storyblok/astro": "^7.2.8",
     "astro": "^5.13.5",
-    "sharp": "^0.34.2"
+    "aws-amplify": "^6.15.6",
+    "d3": "^7.9.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sharp": "^0.34.2",
+    "topojson": "^3.0.2",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1"
   }
 }
