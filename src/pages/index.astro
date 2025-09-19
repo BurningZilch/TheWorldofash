@@ -4,6 +4,10 @@ import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import GoogleTag from '../components/GoogleTag.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const latest = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())[0];
 ---
 
 <!doctype html>
@@ -19,7 +23,7 @@ import GoogleTag from '../components/GoogleTag.astro';
     <section class="hero">
       <h1>World of Ash</h1>
       <p class="tagline">
-        A space for exploring technology and creative problem-solving.
+      A space for experiments, technology, ideas and creative problem-solving.
       </p>
     </section>
 
@@ -27,13 +31,10 @@ import GoogleTag from '../components/GoogleTag.astro';
     <!-- Intro Section -->
     <section class="intro prose">
       <h2>About this site</h2>
-    <h3 style="background-color:Tomato;"> this page is still in development, please come back tommorrw - 18/09/2025 </h3>
-      <p>
-        This blog is a collection of experiments, projects, and reflections on 
-        cybersecurity, interaction design, and creative coding. 
-        It’s a place where new ideas are tested, lessons are shared, 
-        and projects grow over time.
-      </p>
+  <p>
+    World of Ash is a space for sharing my journey—thoughts, projects, and ideas 
+    as they take shape.  
+  </p>
     </section>
 
     <!-- Explore Section -->
@@ -50,7 +51,7 @@ import GoogleTag from '../components/GoogleTag.astro';
     <section class="featured prose">
       <h2>Featured Post</h2>
       <p>
-        <a href="/blog/first-post">Start here with the first post</a> 
+      <a href=/blog/${latest.slug}`}>{latest.data.title}</a> 
         to see what this site is all about.
       </p>
     </section>
