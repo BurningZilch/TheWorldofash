@@ -47,16 +47,20 @@ const latest = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.ge
       </ul>
     </section>
 
-    <!-- Featured Post -->
-    <section class="featured prose">
-      <h2>Featured Post</h2>
-      <p>
-      <a href=/blog/${latest.slug}`}>{latest.data.title}</a> 
-        to see what this site is all about.
-      </p>
-    </section>
-  </main>
-				<Footer />
-	</body>
-
+          <!-- Featured Post as Card -->
+      <section class="featured prose">
+        <h2>Latest Post</h2>
+        <a href={`/blog/${latest.slug}`} class="card">
+	 <img src={latest.data.thumbnailimg?.src} alt={latest.data.title} class="card-image" />
+          <div class="card-content">
+            <h3>{latest.data.title}</h3>
+            <p>{latest.data.description}</p>
+            <small>{latest.data.pubDate.toDateString()}</small>
+          </div>
+        </a>
+      </section>
+    </main>
+    <Footer />
+  </body>
 </html>
+
