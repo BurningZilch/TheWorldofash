@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@astrojs/mdx':
-        specifier: ^4.3.4
+        specifier: ^4.3.5
         version: 4.3.5(astro@5.13.7(@types/node@24.3.3)(rollup@4.50.1)(typescript@5.9.2))
       '@astrojs/react':
         specifier: ^4.3.1

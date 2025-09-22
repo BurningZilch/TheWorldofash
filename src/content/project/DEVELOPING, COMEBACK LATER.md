@@ -1,8 +1,8 @@
 ---
-title: 'DEVELOPING. PLEASE COME BACK LATTER'
+title: 'This page is DEVELOPING. PLEASE COME BACK LATTER'
 description: 'test'
 pubDate: 'Jul 08 2022'
-heroImage: '../../assets/blog-placeholder-3.jpg'
+heroImage: '../../assets/img/404-southpark.jpg'
 ---
 
-asklfjsklga;jkdl;jagkdlas
+Nothing to see here

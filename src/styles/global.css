@@ -245,3 +245,8 @@ hr {
   color: #555;
 }
 
+ul {
+	list-style: none;
+	padding-left: 0;
+	margin-left: 0;
+}
