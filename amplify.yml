@@ -4,8 +4,8 @@ frontend:
     preBuild:
       commands:
         # Ensure correct Node version
-        - nvm install 18
-        - nvm use 18
+        - nvm install 20
+        - nvm use 20
 
         # Enable corepack (pnpm)
         - corepack enable
@@ -27,3 +27,4 @@ frontend:
       - node_modules/**/*
       - pnpm-store/**/*
       - pnpm-lock.yaml
+
