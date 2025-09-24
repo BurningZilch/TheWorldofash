@@ -3,13 +3,23 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install -g pnpm
-        - pnpm install --frozen-lockfile
+        # Ensure correct Node version
+        - nvm install 18
+        - nvm use 18
+
+        # Enable corepack (pnpm)
+        - corepack enable
+        - corepack prepare pnpm@latest --activate
+
+        # Clean caches to avoid stale modules
+        - rm -rf node_modules
+        - pnpm install --frozen-lockfile --shamefully-hoist
     build:
       commands:
+        # Run Astro build
         - pnpm run build
   artifacts:
-    baseDirectory: dist   # or "build" depending on your framework
+    baseDirectory: dist   # Astro builds into "dist"
     files:
       - '**/*'
   cache:
@@ -17,4 +27,3 @@ frontend:
       - node_modules/**/*
       - pnpm-store/**/*
       - pnpm-lock.yaml
-
