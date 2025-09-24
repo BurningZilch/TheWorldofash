@@ -13,7 +13,7 @@ frontend:
 
         # Clean caches to avoid stale modules
         - rm -rf node_modules
-        - pnpm install --frozen-lockfile --shamefully-hoist
+        - pnpm install --no-frozen-lockfile --shamefully-hoist
     build:
       commands:
         # Run Astro build
