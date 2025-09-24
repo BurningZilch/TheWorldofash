@@ -9,7 +9,7 @@ frontend:
 
         # Enable corepack (pnpm)
         - corepack enable
-        - corepack prepare pnpm@latest --activate
+        - corepack prepare pnpm@10.17.1 --activate
 
         # Clean caches to avoid stale modules
         - rm -rf node_modules
