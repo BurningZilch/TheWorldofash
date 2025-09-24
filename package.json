@@ -26,6 +26,7 @@
     "topojson": "^3.0.2",
     "topojson-client": "^3.1.0",
     "topojson-server": "^3.0.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "versor": "^0.2.0"
   }
 }
