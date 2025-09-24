@@ -1,0 +1,21 @@
+---
+import Layout from "../layouts/BlogPost.astro";
+import SouthPark404 from "../assets/img/404-southpark.jpg";
+---
+
+<Layout
+        title="404 - Page Not Found"
+        description="Sorry, the page you’re looking for doesn’t exist."
+        pubDate={new Date()}
+        heroImage={SouthPark404}
+>
+    <p>
+        Oops! You’ve wandered off the map.
+        The page you’re looking for doesn’t exist or might have been moved.
+    </p>
+
+    <p>
+        Don’t worry though — you can always head back to the <a href="/">homepage</a>
+        or check out my <a href="/blog">latest blog posts</a>.
+    </p>
+</Layout>

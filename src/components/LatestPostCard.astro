@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const latest = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())[0];
+---
+
+<section class="featured prose">
+    <h2>Latest Post</h2>
+    <a href={`/blog/${latest.slug}`} class="card">
+        <img
+                src={latest.data.thumbnailimg?.src}
+                alt={latest.data.title}
+                class="card-image"
+        />
+        <div class="card-content">
+            <h3>{latest.data.title}</h3>
+            <p>{latest.data.description}</p>
+            <small>{latest.data.pubDate.toDateString()}</small>
+        </div>
+    </a>
+</section>

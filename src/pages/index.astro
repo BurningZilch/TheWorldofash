@@ -4,63 +4,48 @@ import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import GoogleTag from '../components/GoogleTag.astro';
-import { getCollection } from 'astro:content';
-
-const posts = await getCollection('blog');
-const latest = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())[0];
+import LatestPostCard from '../components/LatestPostCard.astro';
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<GoogleTag />
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-			<main>
-    <!-- Hero Section -->
-    <section class="hero">
-      <h1>World of Ash</h1>
-      <p class="tagline">
+<head>
+  <GoogleTag />
+  <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+</head>
+<body>
+<Header />
+<main>
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>World of Ash</h1>
+    <p class="tagline">
       A space for experiments, technology, ideas and creative problem-solving.
-      </p>
-    </section>
+    </p>
+  </section>
 
+  <!-- Intro Section -->
+  <section class="intro prose">
+    <h2>About this site</h2>
+    <p>
+      World of Ash is a space for sharing my journey—thoughts, projects, and ideas
+      as they take shape.
+    </p>
+  </section>
 
-    <!-- Intro Section -->
-    <section class="intro prose">
-      <h2>About this site</h2>
-  <p>
-    World of Ash is a space for sharing my journey—thoughts, projects, and ideas 
-    as they take shape.  
-  </p>
-    </section>
+  <!-- Explore Section -->
+  <section class="highlights prose">
+    <h2>Explore</h2>
+    <ul>
+      <li>📝 <a href="/blog">Blog posts</a> – thoughts </li>
+      <li>🛠️ <a href="/project">Projects</a> – experiments </li>
+      <li>🌱 <a href="/about">About</a> – who’s behind</li>
+    </ul>
+  </section>
 
-    <!-- Explore Section -->
-    <section class="highlights prose">
-      <h2>Explore</h2>
-      <ul>
-        <li>📝 <a href="/blog">Blog posts</a> – thoughts and lessons learned</li>
-        <li>🛠️ <a href="/project">Projects</a> – experiments and showcases</li>
-        <li>🌱 <a href="/about">About</a> – who’s behind World of Ash</li>
-      </ul>
-    </section>
-
-          <!-- Featured Post as Card -->
-      <section class="featured prose">
-        <h2>Latest Post</h2>
-        <a href={`/blog/${latest.slug}`} class="card">
-	 <img src={latest.data.thumbnailimg?.src} alt={latest.data.title} class="card-image" />
-          <div class="card-content">
-            <h3>{latest.data.title}</h3>
-            <p>{latest.data.description}</p>
-            <small>{latest.data.pubDate.toDateString()}</small>
-          </div>
-        </a>
-      </section>
-    </main>
-    <Footer />
-  </body>
+  <!-- Featured Post (component) -->
+  <LatestPostCard />
+</main>
+<Footer />
+</body>
 </html>
-
