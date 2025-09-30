@@ -1,10 +1,10 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import GoogleTag from '../components/GoogleTag.astro';
-import LatestPostCard from '../components/LatestPostCard.astro';
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+import GoogleTag from "../components/GoogleTag.astro";
+import LatestPostCard from "../components/LatestPostCard.astro";
 ---
 
 <!doctype html>
@@ -15,7 +15,7 @@ import LatestPostCard from '../components/LatestPostCard.astro';
 </head>
 <body>
 <Header />
-<main>
+<main class="home-main">
   <!-- Hero Section -->
   <section class="hero">
     <h1>World of Ash</h1>
@@ -28,7 +28,7 @@ import LatestPostCard from '../components/LatestPostCard.astro';
   <section class="intro prose">
     <h2>About this site</h2>
     <p>
-      World of Ash is a space for sharing my journey—thoughts, projects, and ideas
+      World of Ash is a space for sharing my journey - thoughts, projects, and ideas
       as they take shape.
     </p>
   </section>
@@ -37,9 +37,9 @@ import LatestPostCard from '../components/LatestPostCard.astro';
   <section class="highlights prose">
     <h2>Explore</h2>
     <ul>
-      <li>📝 <a href="/blog">Blog posts</a> – thoughts </li>
-      <li>🛠️ <a href="/project">Projects</a> – experiments </li>
-      <li>🌱 <a href="/about">About</a> – who’s behind</li>
+      <li><a href="/blog">Blog posts</a> - thoughts</li>
+      <li><a href="/project">Projects</a> - experiments</li>
+      <li><a href="/about">About</a> - who is behind</li>
     </ul>
   </section>
 
@@ -47,5 +47,18 @@ import LatestPostCard from '../components/LatestPostCard.astro';
   <LatestPostCard />
 </main>
 <Footer />
+<style>
+  .home-main {
+    padding-top: 1.5em;
+  }
+
+  .home-main .hero {
+    margin: 1.5rem 0 2.5rem;
+  }
+
+  .home-main .hero h1 {
+    font-size: clamp(3.5rem, 7vw, 5rem);
+  }
+</style>
 </body>
 </html>
