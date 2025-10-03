@@ -1,45 +1,54 @@
-<!-- MapOverlay.svelte：可直接复制使用（Svelte + TypeScript） -->
+<!-- src/components/WeatherMap.svelte
+     修复：仅声明一次 API_BASE；其余逻辑同前，并带 CORS 诊断面板
+-->
 <script lang="ts">
     import maplibregl from "maplibre-gl";
     import "maplibre-gl/dist/maplibre-gl.css";
 
-    // 公开环境变量（Astro 在构建时注入）
-    const API_BASE = import.meta.env.PUBLIC_API_BASE ?? "";
+    /** ✅ Amplify 构建时注入（Amplify 控制台需设置同名环境变量）
+     *  例如：PUBLIC_API_BASE=https://abcdefg.lambda-url.ap-southeast-2.on.aws
+     *  注意不要带末尾斜杠
+     */
+    const API_BASE: string = import.meta.env.PUBLIC_API_BASE ?? "";
 
     let mapContainer: HTMLDivElement;
     let map: maplibregl.Map;
 
     // UI 状态
-    let year = 2000;                        // 默认年份
+    let year = 2000;
     let maskMode: "land" | "none" = "land";
     let loading = false;
     let errorMsg: string | null = null;
-    let errorDetail: string | null = null; // 详细错误信息
+    let errorDetail: string | null = null;
 
-    // 当前叠加图层 id
+    // 诊断区状态（用于线上 CORS 自检）
+    let showDiag = true;
+    let diagRunning = false;
+    let diagGetResult = "";
+    let diagOptionsResult = "";
+
     const OVERLAY_ID = "anomaly-tile";
     const OVERLAY_SRC_ID = "anomaly-src";
 
-    /** 色带（发散，负为蓝，正为红）-> [r,g,b,a] (0-255) */
+    // ---- 工具函数：配色、错误、节流 ----
     function divergingPalette(v: number, min = -5, max = 5): [number, number, number, number] {
-        if (Number.isNaN(v)) return [0, 0, 0, 0]; // 透明
+        if (Number.isNaN(v)) return [0, 0, 0, 0];
         const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
         let r: number, g: number, b: number;
         if (t < 0.5) {
-            const k = t / 0.5;      // 0..1 蓝->白
+            const k = t / 0.5;
             r = Math.round(255 * k);
             g = Math.round(255 * k);
             b = 255;
         } else {
-            const k = (t - 0.5) / 0.5; // 0..1 白->红
+            const k = (t - 0.5) / 0.5;
             r = 255;
             g = Math.round(255 * (1 - k));
             b = Math.round(255 * (1 - k));
         }
-        return [r, g, b, 200]; // 半透明
+        return [r, g, b, 200];
     }
 
-    // ---------- 错误增强 ----------
     function clip(s: string, n = 400) {
         return s.length > n ? s.slice(0, n) + " …" : s;
     }
@@ -58,7 +67,6 @@
         return undefined;
     }
 
-    /** 构造更友好的错误信息 */
     function buildError(
         e: unknown,
         ctx: { url?: string; status?: number; statusText?: string; body?: string } = {}
@@ -80,44 +88,34 @@
             detail: detailParts.join("\n"),
         };
     }
-    // ---------- /错误增强 ----------
 
-    // 防抖
     let debounceTimer: number | null = null;
     function debounce(fn: () => void, ms = 250) {
         if (debounceTimer) window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(fn, ms);
     }
 
-    /** /tile 返回的矩阵 -> Canvas PNG（dataURL）并给出地理 bounds */
+    // ---- tile -> dataURL + bounds ----
     async function makeOverlayFromTile(tile: any) {
-        const lat: number[] = tile.lat; // N 行
-        const lon: number[] = tile.lon; // M 列
+        const lat: number[] = tile.lat;
+        const lon: number[] = tile.lon;
         const values: (number | null)[][] = tile.values;
+        const ni = lat.length, nj = lon.length;
 
-        const ni = lat.length;
-        const nj = lon.length;
-
-        // 像素尺寸（每格 16×16px，可按 zoom 调整）
         const pxPerCell = 16;
         const width = Math.max(1, nj * pxPerCell);
         const height = Math.max(1, ni * pxPerCell);
 
-        // Canvas（兼容 OffscreenCanvas 不可用的环境）
         let canvas: HTMLCanvasElement | OffscreenCanvas;
         let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null;
-
         if (typeof (globalThis as any).OffscreenCanvas === "function") {
             canvas = new OffscreenCanvas(width, height);
             ctx = (canvas as OffscreenCanvas).getContext("2d");
         } else {
             const c = document.createElement("canvas");
-            c.width = width;
-            c.height = height;
-            canvas = c;
-            ctx = c.getContext("2d");
+            c.width = width; c.height = height;
+            canvas = c; ctx = c.getContext("2d");
         }
-
         if (!ctx) throw new Error("Canvas 2D 上下文不可用");
 
         const img = ctx.createImageData(width, height);
@@ -140,10 +138,8 @@
                 }
             }
         }
-
         ctx.putImageData(img, 0, 0);
 
-        // 导出为 dataURL（MapLibre image source 更兼容）
         let dataURL: string;
         if (canvas instanceof OffscreenCanvas) {
             const bmp = await (canvas as OffscreenCanvas).convertToBlob({ type: "image/png" });
@@ -152,7 +148,6 @@
             dataURL = (canvas as HTMLCanvasElement).toDataURL("image/png");
         }
 
-        // 叠加范围：用外接矩形（min/max of lon/lat，加半格扩展）
         const cellH = Math.abs(lat[1] - lat[0] || 5);
         const cellW = Math.abs(lon[1] - lon[0] || 5);
         const minLat = Math.min(...lat) - cellH / 2;
@@ -175,7 +170,6 @@
         });
     }
 
-    /** 将地图视野四舍五入到 5° 网格（减少重复请求） */
     function snapBBoxTo5deg(bbox: [number, number, number, number]) {
         const [minLon, minLat, maxLon, maxLat] = bbox;
         const f = (x: number, fn: (n: number) => number) => fn(x / 5) * 5;
@@ -187,7 +181,7 @@
         ] as [number, number, number, number];
     }
 
-    /** 核心：请求 /tile 并渲染叠加层，含增强错误信息 */
+    // ---- 主流程：请求 /tile 并渲染 ----
     async function refreshOverlay() {
         if (!map) return;
         loading = true; errorMsg = null; errorDetail = null;
@@ -228,21 +222,19 @@
 
             const { dataURL, bounds } = await makeOverlayFromTile(tile);
 
-            // 清理旧图层
             if (map.getSource(OVERLAY_SRC_ID)) {
                 if (map.getLayer(OVERLAY_ID)) map.removeLayer(OVERLAY_ID);
                 map.removeSource(OVERLAY_SRC_ID);
             }
 
-            // 添加 image source + 图层
             map.addSource(OVERLAY_SRC_ID, {
                 type: "image",
                 url: dataURL,
                 coordinates: [
-                    [bounds[0], bounds[3]], // 左上
-                    [bounds[2], bounds[3]], // 右上
-                    [bounds[2], bounds[1]], // 右下
-                    [bounds[0], bounds[1]], // 左下
+                    [bounds[0], bounds[3]],
+                    [bounds[2], bounds[3]],
+                    [bounds[2], bounds[1]],
+                    [bounds[0], bounds[1]],
                 ],
             } as any);
 
@@ -281,7 +273,6 @@
         map.on("moveend", () => debounce(refreshOverlay, 250));
         map.on("zoomend", () => debounce(refreshOverlay, 250));
 
-        // 捕获 MapLibre 内部错误
         map.on("error", (ev: any) => {
             const mlErr = ev?.error || ev;
             const { msg, detail } = buildError(mlErr, { url: "MapLibre style/source" });
@@ -299,15 +290,63 @@
         year = Number((e.target as HTMLInputElement).value);
         debounce(refreshOverlay, 150);
     }
+
+    // ---- 线上 CORS 体检工具（只在浏览器里运行）----
+    function headersToPrettyString(h: Headers): string {
+        const arr: string[] = [];
+        h.forEach((v, k) => arr.push(`${k}: ${v}`));
+        return arr.sort().join("\n");
+    }
+
+    async function runCorsDiagnostics() {
+        if (!API_BASE) {
+            diagGetResult = "PUBLIC_API_BASE 为空：请在 Amplify 控制台设置 PUBLIC_API_BASE，并重新部署。";
+            return;
+        }
+        diagRunning = true;
+        diagGetResult = ""; diagOptionsResult = "";
+        try {
+            const testUrl = new URL(`${API_BASE}/tile`);
+            testUrl.searchParams.set("bbox", "130,-30,140,-20");
+            testUrl.searchParams.set("time_year", String(year));
+            testUrl.searchParams.set("mask", maskMode);
+
+            const getRes = await fetch(testUrl.toString(), { mode: "cors" });
+            const getText = await getRes.clone().text().catch(() => "");
+            diagGetResult =
+                `GET ${testUrl}\n` +
+                `Status: ${getRes.status} ${getRes.statusText}\n` +
+                `--- Response Headers ---\n${headersToPrettyString(getRes.headers)}\n` +
+                `--- Body (first 400 chars) ---\n${clip(getText)}`;
+
+            const optRes = await fetch(`${API_BASE}/tile`, { method: "OPTIONS" as any });
+            const optText = await optRes.clone().text().catch(() => "");
+            diagOptionsResult =
+                `OPTIONS ${API_BASE}/tile\n` +
+                `Status: ${optRes.status} ${optRes.statusText}\n` +
+                `--- Response Headers ---\n${headersToPrettyString(optRes.headers)}\n` +
+                `--- Body (first 400 chars) ---\n${clip(optText)}`;
+        } catch (e: any) {
+            diagGetResult = `诊断时出错：${e?.message ?? String(e)}`;
+        } finally {
+            diagRunning = false;
+        }
+    }
+
+    console.log("PUBLIC_API_BASE =", API_BASE, "origin =", typeof window !== "undefined" ? window.location.origin : "SSR");
 </script>
 
 <style>
-    .wrap { display:grid; grid-template-rows: auto 1fr; height: 100%; }
+    .wrap { display:grid; grid-template-rows: auto auto 1fr; height: 100%; }
     .toolbar {
-        display:flex; gap:12px; align-items:center;
+        display:flex; flex-wrap:wrap; gap:12px; align-items:center;
         padding:8px 12px; background:#fff; border-bottom:1px solid #eee;
         position: sticky; top: 0; z-index: 10;
     }
+    .diag {
+        padding:10px 12px; background:#fafafa; border-bottom:1px solid #eee; font-size:13px;
+    }
+    .diag code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .map { position: relative; min-height: 420px; }
     .map-canvas { position:absolute; inset:0; }
     .legend {
@@ -319,55 +358,92 @@
         width: 240px; height: 10px; background: linear-gradient(90deg, #2b6cff, #ffffff, #ff4d4d);
         border-radius: 4px; margin: 6px 0;
     }
-    .error-tip {
-        color:#c00; margin-left:12px;
-    }
-    details summary {
-        cursor: pointer; user-select: none;
-    }
-    details pre {
-        max-width: 720px; white-space: pre-wrap;
+    .error-tip { color:#c00; margin-left:12px; }
+    details summary { cursor: pointer; user-select: none; }
+    details pre, .diag pre {
+        max-width: 100%; white-space: pre-wrap;
         font-size:12px; background:#f8f8f8; padding:8px;
-        border-radius:6px; border:1px solid #eee;
+        border-radius:6px; border:1px solid #eee; overflow:auto;
     }
+    .btn {
+        display:inline-flex; align-items:center; gap:6px;
+        padding:6px 10px; border:1px solid #ddd; border-radius:8px; background:#fff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor:pointer;
+    }
+    .btn[disabled] { opacity:.6; cursor: not-allowed; }
+    .kv { color:#555; }
 </style>
 
-<div class="wrap">
-    <div class="toolbar">
-        <label>年份：
-            <input type="range" min="1750" max="2024" step="1" bind:value={year} on:input={onYearInput} />
-            <strong style="margin-left:6px">{year}</strong>
-        </label>
+<!-- 工具栏（控制 + 状态） -->
+<div class="toolbar">
+    <label>年份：
+        <input type="range" min="1750" max="2024" step="1" bind:value={year} on:input={onYearInput} />
+        <strong style="margin-left:6px">{year}</strong>
+    </label>
 
-        <label style="margin-left:16px">
-            掩膜：
-            <select bind:value={maskMode} on:change={() => debounce(refreshOverlay, 150)}>
-                <option value="land">陆地</option>
-                <option value="none">不掩膜</option>
-            </select>
-        </label>
+    <label style="margin-left:16px">
+        掩膜：
+        <select bind:value={maskMode} on:change={() => debounce(refreshOverlay, 150)}>
+            <option value="land">陆地</option>
+            <option value="none">不掩膜</option>
+        </select>
+    </label>
 
-        {#if loading}<span style="margin-left:12px;color:#888">加载中…</span>{/if}
+    {#if loading}<span style="margin-left:12px;color:#888">加载中…</span>{/if}
 
-        {#if errorMsg}
-            <span class="error-tip">错误：{errorMsg}</span>
-            {#if errorDetail}
-                <details style="margin-left:12px">
-                    <summary>详细信息</summary>
-                    <pre>{errorDetail}</pre>
-                </details>
-            {/if}
+    {#if errorMsg}
+        <span class="error-tip">错误：{errorMsg}</span>
+        {#if errorDetail}
+            <details style="margin-left:12px">
+                <summary>详细信息</summary>
+                <pre>{errorDetail}</pre>
+            </details>
         {/if}
-    </div>
+    {/if}
+</div>
 
-    <div class="map">
-        <div bind:this={mapContainer} class="map-canvas"></div>
-        <div class="legend">
-            <div>温度距平（°C）</div>
-            <div class="legend-bar"></div>
-            <div style="display:flex; justify-content:space-between;">
-                <span>-5</span><span>0</span><span>+5</span>
+<!-- ✅ 放在页面上方、仅用于线上排障的 CORS 自检面板（确认无误后可删除） -->
+<div class="diag">
+    <details open={showDiag} on:toggle={(e:any)=> showDiag = e.currentTarget.open}>
+        <summary><strong>Amplify 线上 CORS 体检</strong>（调通后可删除本面板）</summary>
+        <div style="margin-top:8px; display:grid; gap:6px">
+            <div class="kv"><b>PUBLIC_API_BASE</b>：<code>{API_BASE || "(未设置 / 为空)"}</code></div>
+            <div class="kv"><b>页面 Origin</b>：<code>{typeof window !== "undefined" ? window.location.origin : "(SSR)"}</code></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+                <button class="btn" on:click={runCorsDiagnostics} disabled={diagRunning}>
+                    {diagRunning ? "诊断中…" : "运行 CORS 自检（GET + OPTIONS）"}
+                </button>
+                <button class="btn" on:click={() => { diagGetResult=""; diagOptionsResult=""; }}>清空结果</button>
             </div>
+            {#if diagGetResult}
+                <div>
+                    <h4 style="margin:10px 0 6px">GET 结果</h4>
+                    <pre>{diagGetResult}</pre>
+                </div>
+            {/if}
+            {#if diagOptionsResult}
+                <div>
+                    <h4 style="margin:10px 0 6px">OPTIONS 结果（预检）</h4>
+                    <pre>{diagOptionsResult}</pre>
+                </div>
+            {/if}
+            <div style="font-size:12px; color:#666">
+                期望在 GET 与 OPTIONS 响应头中均看到：<code>access-control-allow-origin</code>、
+                <code>access-control-allow-methods</code>、<code>access-control-allow-headers</code>。
+                若为 HTTPS 页面，请确保 API 也是 HTTPS，避免混合内容被浏览器拦截。
+            </div>
+        </div>
+    </details>
+</div>
+
+<!-- 地图区域 -->
+<div class="map">
+    <div bind:this={mapContainer} class="map-canvas"></div>
+    <div class="legend">
+        <div>温度距平（°C）</div>
+        <div class="legend-bar"></div>
+        <div style="display:flex; justify-content:space-between;">
+            <span>-5</span><span>0</span><span>+5</span>
         </div>
     </div>
 </div>
