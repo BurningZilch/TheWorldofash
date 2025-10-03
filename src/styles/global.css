@@ -49,6 +49,11 @@ main {
 	margin: auto;
 	padding: 3em 1em;
 }
+.full-bleed {
+	width: 100vw;
+	margin-left: calc(50% - 50vw);
+	margin-right: calc(50% - 50vw);
+}
 h1,
 h2,
 h3,

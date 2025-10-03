@@ -1,18 +1,17 @@
 <!-- src/components/WeatherMap.svelte
-     修复：仅声明一次 API_BASE；其余逻辑同前，并带 CORS 诊断面板
+     高性能版：Canvas Source + AbortController + 缓存 + 动态像素密度 + LUT
 -->
 <script lang="ts">
-    import maplibregl from "maplibre-gl";
-    import "maplibre-gl/dist/maplibre-gl.css";
+    import { onMount } from "svelte";
 
-    /** ✅ Amplify 构建时注入（Amplify 控制台需设置同名环境变量）
-     *  例如：PUBLIC_API_BASE=https://abcdefg.lambda-url.ap-southeast-2.on.aws
-     *  注意不要带末尾斜杠
-     */
+    // Amplify 构建时注入（不要带末尾斜杠）
     const API_BASE: string = import.meta.env.PUBLIC_API_BASE ?? "";
 
     let mapContainer: HTMLDivElement;
-    let map: maplibregl.Map;
+    let map: any;            // 动态导入后再赋值具体类型
+    let maplibregl: any;
+
+    export let minHeight: string = "420px";
 
     // UI 状态
     let year = 2000;
@@ -21,52 +20,68 @@
     let errorMsg: string | null = null;
     let errorDetail: string | null = null;
 
-    // 诊断区状态（用于线上 CORS 自检）
-    let showDiag = true;
-    let diagRunning = false;
-    let diagGetResult = "";
-    let diagOptionsResult = "";
-
     const OVERLAY_ID = "anomaly-tile";
     const OVERLAY_SRC_ID = "anomaly-src";
 
-    // ---- 工具函数：配色、错误、节流 ----
-    function divergingPalette(v: number, min = -5, max = 5): [number, number, number, number] {
-        if (Number.isNaN(v)) return [0, 0, 0, 0];
-        const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
-        let r: number, g: number, b: number;
-        if (t < 0.5) {
-            const k = t / 0.5;
-            r = Math.round(255 * k);
-            g = Math.round(255 * k);
-            b = 255;
-        } else {
-            const k = (t - 0.5) / 0.5;
-            r = 255;
-            g = Math.round(255 * (1 - k));
-            b = Math.round(255 * (1 - k));
+    // 用于 Canvas Source 的画布（隐藏于 DOM）
+    let overlayCanvasEl: HTMLCanvasElement;
+    let overlayCtx: CanvasRenderingContext2D | null = null;
+
+    // 网络请求的取消器
+    let inFlight: AbortController | null = null;
+
+    // 缓存：key = "minLon,minLat,maxLon,maxLat@year@mask"
+    type Bounds = [number, number, number, number];
+    type CacheEntry = { image: ImageData; width: number; height: number; bounds: Bounds; pxPerCell: number };
+    const tileCache = new Map<string, CacheEntry>();
+    let currentKey: string | null = null;
+
+    // ------- 性能：LUT 上色 -------
+    // 把 [-5, +5] 映射到 0..255，并为每个强度预生成 RGBA
+    const LUT = new Uint8ClampedArray(256 * 4);
+    (function buildLUT() {
+        // 用与之前 divergingPalette 等价的蓝-白-红发散色带
+        for (let i = 0; i < 256; i++) {
+            const t = i / 255; // 0..1
+            let r: number, g: number, b: number;
+            if (t < 0.5) {
+                const k = t / 0.5;
+                r = Math.round(255 * k);
+                g = Math.round(255 * k);
+                b = 255;
+            } else {
+                const k = (t - 0.5) / 0.5;
+                r = 255;
+                g = Math.round(255 * (1 - k));
+                b = Math.round(255 * (1 - k));
+            }
+            const o = i * 4;
+            LUT[o + 0] = r;
+            LUT[o + 1] = g;
+            LUT[o + 2] = b;
+            LUT[o + 3] = 200; // 半透明
         }
-        return [r, g, b, 200];
+    })();
+
+    function valToLUTIndex(v: number, vmin = -5, vmax = 5): number {
+        // NaN 在调用处处理
+        const t = Math.max(0, Math.min(1, (v - vmin) / (vmax - vmin)));
+        return (t * 255) | 0;
     }
 
+    // ------- 小工具 -------
     function clip(s: string, n = 400) {
         return s.length > n ? s.slice(0, n) + " …" : s;
     }
-
     function hintFor(e: unknown, status?: number) {
         const msg = (e as any)?.message ?? String(e);
-        if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-            return "可能是 CORS 或网络问题。检查 PUBLIC_API_BASE、HTTPS 以及服务器的 CORS 响应头。";
-        }
+        if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "可能是 CORS 或网络问题。检查 PUBLIC_API_BASE、HTTPS 以及服务器的 CORS 响应头。";
         if (status === 404) return "接口不存在。确认后端是否提供了 /tile。";
         if (status === 401 || status === 403) return "鉴权或 CORS 被拦截。检查 Token 和 Access-Control-Allow-Origin。";
         if (status === 500) return "服务器内部错误。请查看后端/云函数日志。";
-        if (msg.includes("Unexpected token") || msg.includes("JSON")) {
-            return "返回内容不是合法 JSON。查看下方 Body 片段。";
-        }
+        if (msg.includes("Unexpected token") || msg.includes("JSON")) return "返回内容不是合法 JSON。";
         return undefined;
     }
-
     function buildError(
         e: unknown,
         ctx: { url?: string; status?: number; statusText?: string; body?: string } = {}
@@ -80,122 +95,166 @@
             ctx.body && `Body: ${clip(ctx.body)}`,
             base && `Raw error: ${base}`,
         ].filter(Boolean);
-
         return {
-            msg: [statusPart || "请求失败", tip ? `— ${tip}` : "", ctx.url ? `（URL: ${ctx.url}）` : ""]
-                .filter(Boolean)
-                .join(" "),
+            msg: [statusPart || "请求失败", tip ? `— ${tip}` : "", ctx.url ? `（URL: ${ctx.url}）` : ""].filter(Boolean).join(" "),
             detail: detailParts.join("\n"),
         };
     }
 
+    // 防抖
     let debounceTimer: number | null = null;
-    function debounce(fn: () => void, ms = 250) {
+    function debounce(fn: () => void, ms = 200) {
         if (debounceTimer) window.clearTimeout(debounceTimer);
         debounceTimer = window.setTimeout(fn, ms);
     }
 
-    // ---- tile -> dataURL + bounds ----
-    async function makeOverlayFromTile(tile: any) {
+    // 5° 对齐（减少重复请求）
+    function snapBBoxTo5deg(bbox: Bounds): Bounds {
+        const [minLon, minLat, maxLon, maxLat] = bbox;
+        const f = (x: number, fn: (n: number) => number) => fn(x / 5) * 5;
+        return [f(minLon, Math.floor), f(minLat, Math.floor), f(maxLon, Math.ceil), f(maxLat, Math.ceil)];
+    }
+
+    // 缩放 → 每格像素
+    function pxPerCellForZoom(z: number) {
+        const v = Math.round(Math.pow(2, z - 3)); // z=3 -> 1, z=5 -> 4, z=7 -> 16
+        return Math.max(2, Math.min(32, v));
+    }
+
+    // 生成像素（ImageData），同时返回 bounds
+    function imageDataFromTile(tile: any, pxPerCell: number) {
         const lat: number[] = tile.lat;
         const lon: number[] = tile.lon;
         const values: (number | null)[][] = tile.values;
-        const ni = lat.length, nj = lon.length;
 
-        const pxPerCell = 16;
+        const ni = lat.length, nj = lon.length;
         const width = Math.max(1, nj * pxPerCell);
         const height = Math.max(1, ni * pxPerCell);
+        const image = new ImageData(width, height);
+        const data = image.data;
 
-        let canvas: HTMLCanvasElement | OffscreenCanvas;
-        let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null;
-        if (typeof (globalThis as any).OffscreenCanvas === "function") {
-            canvas = new OffscreenCanvas(width, height);
-            ctx = (canvas as OffscreenCanvas).getContext("2d");
-        } else {
-            const c = document.createElement("canvas");
-            c.width = width; c.height = height;
-            canvas = c; ctx = c.getContext("2d");
-        }
-        if (!ctx) throw new Error("Canvas 2D 上下文不可用");
-
-        const img = ctx.createImageData(width, height);
-        const data = img.data;
-
-        for (let i = 0; i < ni; i++) {
-            for (let j = 0; j < nj; j++) {
-                const v = values[i][j];
-                const [r, g, b, a] = v == null ? [0, 0, 0, 0] : divergingPalette(v, -5, 5);
-                for (let dy = 0; dy < pxPerCell; dy++) {
-                    for (let dx = 0; dx < pxPerCell; dx++) {
-                        const x = j * pxPerCell + dx;
-                        const y = i * pxPerCell + dy;
-                        const idx = (y * width + x) * 4;
-                        data[idx + 0] = r;
-                        data[idx + 1] = g;
-                        data[idx + 2] = b;
-                        data[idx + 3] = a;
-                    }
-                }
-            }
-        }
-        ctx.putImageData(img, 0, 0);
-
-        let dataURL: string;
-        if (canvas instanceof OffscreenCanvas) {
-            const bmp = await (canvas as OffscreenCanvas).convertToBlob({ type: "image/png" });
-            dataURL = await blobToDataURL(bmp);
-        } else {
-            dataURL = (canvas as HTMLCanvasElement).toDataURL("image/png");
-        }
-
+        // 计算地理 bounds（半格扩展）
         const cellH = Math.abs(lat[1] - lat[0] || 5);
         const cellW = Math.abs(lon[1] - lon[0] || 5);
         const minLat = Math.min(...lat) - cellH / 2;
         const maxLat = Math.max(...lat) + cellH / 2;
         const minLon = Math.min(...lon) - cellW / 2;
         const maxLon = Math.max(...lon) + cellW / 2;
+        const bounds: Bounds = [minLon, minLat, maxLon, maxLat];
 
-        return {
-            dataURL,
-            bounds: [minLon, minLat, maxLon, maxLat] as [number, number, number, number],
-        };
+        // 填像素（按格子扩展）
+        for (let i = 0; i < ni; i++) {
+            for (let j = 0; j < nj; j++) {
+                const v = values[i][j];
+                const transparent = v == null || Number.isNaN(v);
+                const lutIdx = transparent ? 0 : valToLUTIndex(v as number, -5, 5);
+                const r = transparent ? 0 : LUT[lutIdx * 4 + 0];
+                const g = transparent ? 0 : LUT[lutIdx * 4 + 1];
+                const b = transparent ? 0 : LUT[lutIdx * 4 + 2];
+                const a = transparent ? 0 : LUT[lutIdx * 4 + 3];
+
+                const x0 = j * pxPerCell;
+                const y0 = i * pxPerCell;
+                for (let dy = 0; dy < pxPerCell; dy++) {
+                    let row = (y0 + dy) * width + x0;
+                    let idx = row * 4;
+                    for (let dx = 0; dx < pxPerCell; dx++) {
+                        data[idx++] = r;
+                        data[idx++] = g;
+                        data[idx++] = b;
+                        data[idx++] = a;
+                    }
+                }
+            }
+        }
+
+        return { image, width, height, bounds };
     }
 
-    function blobToDataURL(blob: Blob): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
+    function cacheKey(bounds: Bounds, year: number, mask: string) {
+        return `${bounds.join(",")}@${year}@${mask}`;
     }
 
-    function snapBBoxTo5deg(bbox: [number, number, number, number]) {
-        const [minLon, minLat, maxLon, maxLat] = bbox;
-        const f = (x: number, fn: (n: number) => number) => fn(x / 5) * 5;
-        return [
-            f(minLon, Math.floor),
-            f(minLat, Math.floor),
-            f(maxLon, Math.ceil),
-            f(maxLat, Math.ceil),
-        ] as [number, number, number, number];
+    // 把 ImageData 绘到 overlayCanvasEl
+    function paintToOverlayCanvas(entry: CacheEntry) {
+        if (!overlayCtx) return;
+        if (overlayCanvasEl.width !== entry.width || overlayCanvasEl.height !== entry.height) {
+            overlayCanvasEl.width = entry.width;
+            overlayCanvasEl.height = entry.height;
+        }
+        overlayCtx.putImageData(entry.image, 0, 0);
+        // 提醒 MapLibre 重绘
+        map && (map as any).triggerRepaint?.();
     }
 
-    // ---- 主流程：请求 /tile 并渲染 ----
+    // 安全设置/更新 canvas source 的坐标
+    function ensureCanvasSource(entry: CacheEntry) {
+        const src = map.getSource(OVERLAY_SRC_ID);
+        const coords = [
+            [entry.bounds[0], entry.bounds[3]],
+            [entry.bounds[2], entry.bounds[3]],
+            [entry.bounds[2], entry.bounds[1]],
+            [entry.bounds[0], entry.bounds[1]],
+        ];
+        if (!src) {
+            map.addSource(OVERLAY_SRC_ID, {
+                type: "canvas",
+                canvas: overlayCanvasEl,
+                coordinates: coords,
+                animate: true, // 每次绘完会触发 repaint
+            } as any);
+            if (!map.getLayer(OVERLAY_ID)) {
+                map.addLayer({
+                    id: OVERLAY_ID,
+                    type: "raster",
+                    source: OVERLAY_SRC_ID,
+                    paint: { "raster-opacity": 1.0 },
+                });
+            }
+        } else {
+            // 更新坐标（避免频繁销毁/创建）
+            (src as any).setCoordinates(coords);
+        }
+    }
+
+    // 核心刷新流程
     async function refreshOverlay() {
-        if (!map) return;
+        if (!map || !overlayCtx) return;
+
         loading = true; errorMsg = null; errorDetail = null;
 
+        // 计算对齐 bbox
+        const b = map.getBounds();
+        const bbox = snapBBoxTo5deg([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+
+        // 以当前缩放决定像素密度
+        const pxPerCell = pxPerCellForZoom(map.getZoom() ?? 3);
+
+        const key = cacheKey(bbox, year, maskMode);
+        const cached = tileCache.get(key);
+        if (cached && cached.pxPerCell === pxPerCell) {
+            // 直接复用：画并更新 source 坐标
+            paintToOverlayCanvas(cached);
+            ensureCanvasSource(cached);
+            currentKey = key;
+            loading = false;
+            return;
+        }
+
+        // 取消旧请求
+        inFlight?.abort();
+        const ac = new AbortController(); inFlight = ac;
+
         try {
-            const b = map.getBounds();
-            const bbox = snapBBoxTo5deg([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+            // 请求
             const url = new URL(`${API_BASE}/tile`);
             url.searchParams.set("bbox", bbox.join(","));
             url.searchParams.set("time_year", String(year));
             url.searchParams.set("mask", maskMode);
-
             const reqUrl = url.toString();
-            const res = await fetch(reqUrl, { mode: "cors" });
+
+            const res = await fetch(reqUrl, { mode: "cors", signal: ac.signal });
+            if (ac.signal.aborted) return;
 
             if (!res.ok) {
                 const bodyText = await res.text().catch(() => "");
@@ -206,7 +265,6 @@
                 throw new Error(msg);
             }
 
-            const ct = res.headers.get("content-type") || "";
             let tile: any;
             try {
                 tile = await res.json();
@@ -215,35 +273,23 @@
                 const { msg, detail } = buildError(new Error("JSON parse error"), {
                     url: reqUrl, status: res.status, statusText: res.statusText, body: bodyText
                 });
-                errorMsg = msg;
-                errorDetail = (ct ? `Content-Type: ${ct}\n` : "") + detail;
+                errorMsg = msg; errorDetail = detail;
                 throw jsonErr;
             }
 
-            const { dataURL, bounds } = await makeOverlayFromTile(tile);
+            // 生成像素
+            const { image, width, height, bounds } = imageDataFromTile(tile, pxPerCell);
+            const entry: CacheEntry = { image, width, height, bounds, pxPerCell };
 
-            if (map.getSource(OVERLAY_SRC_ID)) {
-                if (map.getLayer(OVERLAY_ID)) map.removeLayer(OVERLAY_ID);
-                map.removeSource(OVERLAY_SRC_ID);
-            }
+            // 写缓存 & 绘制 & 确保 source
+            tileCache.set(key, entry);
+            paintToOverlayCanvas(entry);
+            ensureCanvasSource(entry);
+            currentKey = key;
 
-            map.addSource(OVERLAY_SRC_ID, {
-                type: "image",
-                url: dataURL,
-                coordinates: [
-                    [bounds[0], bounds[3]],
-                    [bounds[2], bounds[3]],
-                    [bounds[2], bounds[1]],
-                    [bounds[0], bounds[1]],
-                ],
-            } as any);
+            // 轻量“邻区预取”（左右上下各一格），后台缓存，不画
+            prefetchNeighbors(bbox, year, maskMode, pxPerCell).catch(()=>{ /* 忽略预取失败 */ });
 
-            map.addLayer({
-                id: OVERLAY_ID,
-                type: "raster",
-                source: OVERLAY_SRC_ID,
-                paint: { "raster-opacity": 1.0 },
-            });
         } catch (e: any) {
             if (!errorMsg) {
                 const built = buildError(e);
@@ -252,11 +298,48 @@
             }
             console.error(e);
         } finally {
+            if (inFlight === ac) inFlight = null;
             loading = false;
         }
     }
 
+    // 预取相邻对齐 bbox（±5° 方向）
+    async function prefetchNeighbors(bbox: Bounds, yr: number, mask: string, pxPerCell: number) {
+        const steps: Bounds[] = [
+            [bbox[0] - 5, bbox[1], bbox[2] - 5, bbox[3]], // 左
+            [bbox[0] + 5, bbox[1], bbox[2] + 5, bbox[3]], // 右
+            [bbox[0], bbox[1] - 5, bbox[2], bbox[3] - 5], // 下
+            [bbox[0], bbox[1] + 5, bbox[2], bbox[3] + 5], // 上
+        ];
+        for (const nb of steps) {
+            const key = cacheKey(nb, yr, mask);
+            if (tileCache.has(key)) continue;
+            try {
+                const url = new URL(`${API_BASE}/tile`);
+                url.searchParams.set("bbox", nb.join(","));
+                url.searchParams.set("time_year", String(yr));
+                url.searchParams.set("mask", mask);
+                const res = await fetch(url.toString(), { mode: "cors" });
+                if (!res.ok) continue;
+                const tile = await res.json();
+                const { image, width, height, bounds } = imageDataFromTile(tile, pxPerCell);
+                tileCache.set(key, { image, width, height, bounds, pxPerCell });
+            } catch {}
+        }
+    }
+
+    // ------- 初始化 MapLibre -------
     function initMap() {
+        if (!maplibregl || !mapContainer) return;
+
+        // 初始化隐藏画布
+        overlayCanvasEl = document.createElement("canvas");
+        overlayCanvasEl.style.position = "absolute";
+        overlayCanvasEl.style.left = "-99999px"; // 不占布局
+        document.body.appendChild(overlayCanvasEl);
+        overlayCtx = overlayCanvasEl.getContext("2d");
+        if (overlayCtx) overlayCtx.imageSmoothingEnabled = false;
+
         map = new maplibregl.Map({
             container: mapContainer,
             style: "https://demotiles.maplibre.org/style.json",
@@ -270,8 +353,8 @@
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
         map.on("load", () => refreshOverlay());
-        map.on("moveend", () => debounce(refreshOverlay, 250));
-        map.on("zoomend", () => debounce(refreshOverlay, 250));
+        map.on("moveend", () => debounce(refreshOverlay, 120));
+        map.on("zoomend", () => debounce(refreshOverlay, 120));
 
         map.on("error", (ev: any) => {
             const mlErr = ev?.error || ev;
@@ -281,73 +364,39 @@
         });
     }
 
-    // 初始化
-    $: if (mapContainer) {
-        if (!map) initMap();
+    // 动态导入（避免 HMR/SSR 的模块未定义）
+    onMount(async () => {
+        try {
+            const mod = await import("maplibre-gl");
+            await import("maplibre-gl/dist/maplibre-gl.css");
+            maplibregl = (mod as any).default ?? mod;
+            if (mapContainer) initMap();
+        } catch (e) {
+            errorMsg = "地图库加载失败";
+            errorDetail = String(e);
+            console.error(e);
+        }
+    });
+
+    // 容器出现且库已加载 → 初始化地图
+    $: if (maplibregl && mapContainer && !map) {
+        initMap();
     }
 
     function onYearInput(e: Event) {
         year = Number((e.target as HTMLInputElement).value);
         debounce(refreshOverlay, 150);
     }
-
-    // ---- 线上 CORS 体检工具（只在浏览器里运行）----
-    function headersToPrettyString(h: Headers): string {
-        const arr: string[] = [];
-        h.forEach((v, k) => arr.push(`${k}: ${v}`));
-        return arr.sort().join("\n");
-    }
-
-    async function runCorsDiagnostics() {
-        if (!API_BASE) {
-            diagGetResult = "PUBLIC_API_BASE 为空：请在 Amplify 控制台设置 PUBLIC_API_BASE，并重新部署。";
-            return;
-        }
-        diagRunning = true;
-        diagGetResult = ""; diagOptionsResult = "";
-        try {
-            const testUrl = new URL(`${API_BASE}/tile`);
-            testUrl.searchParams.set("bbox", "130,-30,140,-20");
-            testUrl.searchParams.set("time_year", String(year));
-            testUrl.searchParams.set("mask", maskMode);
-
-            const getRes = await fetch(testUrl.toString(), { mode: "cors" });
-            const getText = await getRes.clone().text().catch(() => "");
-            diagGetResult =
-                `GET ${testUrl}\n` +
-                `Status: ${getRes.status} ${getRes.statusText}\n` +
-                `--- Response Headers ---\n${headersToPrettyString(getRes.headers)}\n` +
-                `--- Body (first 400 chars) ---\n${clip(getText)}`;
-
-            const optRes = await fetch(`${API_BASE}/tile`, { method: "OPTIONS" as any });
-            const optText = await optRes.clone().text().catch(() => "");
-            diagOptionsResult =
-                `OPTIONS ${API_BASE}/tile\n` +
-                `Status: ${optRes.status} ${optRes.statusText}\n` +
-                `--- Response Headers ---\n${headersToPrettyString(optRes.headers)}\n` +
-                `--- Body (first 400 chars) ---\n${clip(optText)}`;
-        } catch (e: any) {
-            diagGetResult = `诊断时出错：${e?.message ?? String(e)}`;
-        } finally {
-            diagRunning = false;
-        }
-    }
-
-    console.log("PUBLIC_API_BASE =", API_BASE, "origin =", typeof window !== "undefined" ? window.location.origin : "SSR");
 </script>
 
 <style>
-    .wrap { display:grid; grid-template-rows: auto auto 1fr; height: 100%; }
+    .wrap { display:grid; grid-template-rows: auto 1fr; height: 100%; }
     .toolbar {
         display:flex; flex-wrap:wrap; gap:12px; align-items:center;
         padding:8px 12px; background:#fff; border-bottom:1px solid #eee;
         position: sticky; top: 0; z-index: 10;
     }
-    .diag {
-        padding:10px 12px; background:#fafafa; border-bottom:1px solid #eee; font-size:13px;
-    }
-    .diag code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .map { position: relative; min-height: 420px; }
+    .map { position: relative; }
     .map-canvas { position:absolute; inset:0; }
     .legend {
         position:absolute; bottom:10px; left:10px; padding:8px 10px;
@@ -360,90 +409,49 @@
     }
     .error-tip { color:#c00; margin-left:12px; }
     details summary { cursor: pointer; user-select: none; }
-    details pre, .diag pre {
+    details pre {
         max-width: 100%; white-space: pre-wrap;
         font-size:12px; background:#f8f8f8; padding:8px;
         border-radius:6px; border:1px solid #eee; overflow:auto;
     }
-    .btn {
-        display:inline-flex; align-items:center; gap:6px;
-        padding:6px 10px; border:1px solid #ddd; border-radius:8px; background:#fff;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04); cursor:pointer;
-    }
-    .btn[disabled] { opacity:.6; cursor: not-allowed; }
-    .kv { color:#555; }
 </style>
 
-<!-- 工具栏（控制 + 状态） -->
-<div class="toolbar">
-    <label>年份：
-        <input type="range" min="1750" max="2024" step="1" bind:value={year} on:input={onYearInput} />
-        <strong style="margin-left:6px">{year}</strong>
-    </label>
+<div class="wrap">
+    <div class="toolbar">
+        <label>年份：
+            <input type="range" min="1750" max="2024" step="1" bind:value={year} on:input={onYearInput} />
+            <strong style="margin-left:6px">{year}</strong>
+        </label>
 
-    <label style="margin-left:16px">
-        掩膜：
-        <select bind:value={maskMode} on:change={() => debounce(refreshOverlay, 150)}>
-            <option value="land">陆地</option>
-            <option value="none">不掩膜</option>
-        </select>
-    </label>
+        <label style="margin-left:16px">
+            掩膜：
+            <select bind:value={maskMode} on:change={() => debounce(refreshOverlay, 120)}>
+                <option value="land">陆地</option>
+                <option value="none">不掩膜</option>
+            </select>
+        </label>
 
-    {#if loading}<span style="margin-left:12px;color:#888">加载中…</span>{/if}
+        {#if loading}<span style="margin-left:12px;color:#888">加载中…</span>{/if}
 
-    {#if errorMsg}
-        <span class="error-tip">错误：{errorMsg}</span>
-        {#if errorDetail}
-            <details style="margin-left:12px">
-                <summary>详细信息</summary>
-                <pre>{errorDetail}</pre>
-            </details>
+        {#if errorMsg}
+            <span class="error-tip">错误：{errorMsg}</span>
+            {#if errorDetail}
+                <details style="margin-left:12px">
+                    <summary>详细信息</summary>
+                    <pre>{errorDetail}</pre>
+                </details>
+            {/if}
         {/if}
-    {/if}
-</div>
+    </div>
 
-<!-- ✅ 放在页面上方、仅用于线上排障的 CORS 自检面板（确认无误后可删除） -->
-<div class="diag">
-    <details open={showDiag} on:toggle={(e:any)=> showDiag = e.currentTarget.open}>
-        <summary><strong>Amplify 线上 CORS 体检</strong>（调通后可删除本面板）</summary>
-        <div style="margin-top:8px; display:grid; gap:6px">
-            <div class="kv"><b>PUBLIC_API_BASE</b>：<code>{API_BASE || "(未设置 / 为空)"}</code></div>
-            <div class="kv"><b>页面 Origin</b>：<code>{typeof window !== "undefined" ? window.location.origin : "(SSR)"}</code></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-                <button class="btn" on:click={runCorsDiagnostics} disabled={diagRunning}>
-                    {diagRunning ? "诊断中…" : "运行 CORS 自检（GET + OPTIONS）"}
-                </button>
-                <button class="btn" on:click={() => { diagGetResult=""; diagOptionsResult=""; }}>清空结果</button>
+    <div class="map" style={`min-height: ${minHeight};`}>
+        <div bind:this={mapContainer} class="map-canvas"></div>
+        <div class="legend">
+            <div>温度距平（°C）</div>
+            <div class="legend-bar"></div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>-5</span><span>0</span><span>+5</span>
             </div>
-            {#if diagGetResult}
-                <div>
-                    <h4 style="margin:10px 0 6px">GET 结果</h4>
-                    <pre>{diagGetResult}</pre>
-                </div>
-            {/if}
-            {#if diagOptionsResult}
-                <div>
-                    <h4 style="margin:10px 0 6px">OPTIONS 结果（预检）</h4>
-                    <pre>{diagOptionsResult}</pre>
-                </div>
-            {/if}
-            <div style="font-size:12px; color:#666">
-                期望在 GET 与 OPTIONS 响应头中均看到：<code>access-control-allow-origin</code>、
-                <code>access-control-allow-methods</code>、<code>access-control-allow-headers</code>。
-                若为 HTTPS 页面，请确保 API 也是 HTTPS，避免混合内容被浏览器拦截。
-            </div>
-        </div>
-    </details>
-</div>
-
-<!-- 地图区域 -->
-<div class="map">
-    <div bind:this={mapContainer} class="map-canvas"></div>
-    <div class="legend">
-        <div>温度距平（°C）</div>
-        <div class="legend-bar"></div>
-        <div style="display:flex; justify-content:space-between;">
-            <span>-5</span><span>0</span><span>+5</span>
         </div>
     </div>
 </div>

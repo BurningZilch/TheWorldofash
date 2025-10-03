@@ -8,4 +8,6 @@ pubDate: Sep 29 2025
 
 import WeatherMap from '../../components/WeatherMap.svelte';
 
-<WeatherMap client:load />
+<div class="full-bleed">
+  <WeatherMap client:load minHeight="min(80vh, 900px)" />
+</div>
