@@ -67,7 +67,6 @@
   };
 
   $: label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-  $: icon = theme === 'dark' ? '🌙' : '☀️';
 </script>
 
 <button
@@ -77,7 +76,30 @@
   aria-label={label}
   title={label}
 >
-  <span aria-hidden="true">{icon}</span>
+  <span class="icon" aria-hidden="true">
+    {#if theme === 'dark'}
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path
+          fill="currentColor"
+          d="M21 12.79A9 9 0 0 1 11.21 3a7 7 0 1 0 9.79 9.79z"
+        />
+      </svg>
+    {:else}
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="5" fill="currentColor" />
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="3" x2="12" y2="1" />
+          <line x1="12" y1="23" x2="12" y2="21" />
+          <line x1="4.22" y1="4.22" x2="2.81" y2="2.81" />
+          <line x1="21.19" y1="21.19" x2="19.78" y2="19.78" />
+          <line x1="3" y1="12" x2="1" y2="12" />
+          <line x1="23" y1="12" x2="21" y2="12" />
+          <line x1="4.22" y1="19.78" x2="2.81" y2="21.19" />
+          <line x1="21.19" y1="2.81" x2="19.78" y2="4.22" />
+        </g>
+      </svg>
+    {/if}
+  </span>
 </button>
 
 <style>
@@ -107,10 +129,26 @@
     outline: none;
   }
 
+  .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
   @media (max-width: 720px) {
     .theme-toggle {
       padding: 0.4rem;
       font-size: 0.85rem;
+    }
+
+    .icon svg {
+      width: 1.1rem;
+      height: 1.1rem;
     }
   }
 </style>
