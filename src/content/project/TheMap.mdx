@@ -1,0 +1,34 @@
+---
+title: Weather Map with Other datas
+description: Check the weather in history and how it effect around other things
+pubDate: Sep 29 2025
+---
+
+> Drag the map, zoom, and scrub the year slider to explore temperature anomalies (°C).
+
+{/* WeatherMap temporarily disabled until Nov 1, 2025 */}
+{/* import WeatherMap from '../../components/WeatherMap.svelte'; */}
+
+<div class="notice">
+  <h2>Temporary Notice (October 4, 2025)</h2>
+  <p>
+    Our data backend has reached its traffic limits, so the interactive Weather Map is temporarily paused.
+    I am currently optimizing query logic and caching to make the dataset more sustainable under load.
+  </p>
+  <p>
+    Please check back on <strong>November 1, 2025</strong>. Thank you for your patience!
+  </p>
+  <details>
+    <summary>Why is this happening?</summary>
+    <p>
+      The underlying API (used by the map tiles) exceeded the available quota. We’re reducing redundant
+      requests, tightening server-side caching, and adding client-side deduplication to stretch the bandwidth.
+    </p>
+  </details>
+</div>
+
+{/* Disabled block — keep for later restore
+<div class="full-bleed">
+  <WeatherMap client:load minHeight="min(80vh, 900px)" />
+</div>
+*/}
