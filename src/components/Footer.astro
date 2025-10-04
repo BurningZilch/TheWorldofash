@@ -46,9 +46,11 @@ import KofiButton from "./KofiButton.astro";
 <style>
 	footer {
 		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		background: var(--body-background);
+		color: var(--text-muted);
 		text-align: center;
+		border-top: 1px solid var(--border-color);
+		transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 	}
 	.social-links {
 		display: flex;
@@ -58,9 +60,10 @@ import KofiButton from "./KofiButton.astro";
 	}
 	.social-links a {
 		text-decoration: none;
-		color: rgb(var(--gray));
+		color: var(--text-muted);
+		transition: color 0.2s ease;
 	}
 	.social-links a:hover {
-		color: rgb(var(--gray-dark));
+		color: var(--heading-color);
 	}
 </style>

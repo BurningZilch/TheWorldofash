@@ -57,16 +57,18 @@ const posts = (await getCollection('blog')).sort(
 	}
 	.title {
 		margin: 0;
-		color: rgb(var(--black));
+		color: var(--heading-color);
 		line-height: 1;
+		transition: color 0.2s ease;
 	}
 	.date {
 		margin: 0;
-		color: rgb(var(--gray));
+		color: var(--text-muted);
+		transition: color 0.2s ease;
 	}
 	ul li a:hover h4,
 	ul li a:hover .date {
-		color: rgb(var(--accent));
+		color: var(--accent);
 	}
 	ul a:hover img {
 		box-shadow: var(--box-shadow);

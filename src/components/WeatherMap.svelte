@@ -393,26 +393,39 @@
     .wrap { display:grid; grid-template-rows: auto 1fr; height: 100%; }
     .toolbar {
         display:flex; flex-wrap:wrap; gap:12px; align-items:center;
-        padding:8px 12px; background:#fff; border-bottom:1px solid #eee;
+        padding:8px 12px;
+        background: var(--surface);
+        border-bottom:1px solid var(--border-color);
+        color: var(--body-text);
         position: sticky; top: 0; z-index: 10;
+        transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
     .map { position: relative; }
     .map-canvas { position:absolute; inset:0; }
     .legend {
         position:absolute; bottom:10px; left:10px; padding:8px 10px;
-        background:rgba(255,255,255,0.9); border-radius:8px; font-size:12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        background: var(--surface-elevated);
+        border-radius:8px; font-size:12px;
+        border:1px solid var(--border-color);
+        color: var(--body-text);
+        box-shadow: var(--box-shadow);
+        backdrop-filter: blur(12px);
     }
     .legend-bar {
         width: 240px; height: 10px; background: linear-gradient(90deg, #2b6cff, #ffffff, #ff4d4d);
         border-radius: 4px; margin: 6px 0;
     }
-    .error-tip { color:#c00; margin-left:12px; }
+    .loading { margin-left:12px; color: var(--text-muted); }
+    .mask-select { margin-left:16px; }
+    .year-value { margin-left:6px; }
+    .error-tip { color:#ff5d5d; margin-left:12px; font-weight:600; }
+    .error-detail { margin-left:12px; }
     details summary { cursor: pointer; user-select: none; }
     details pre {
         max-width: 100%; white-space: pre-wrap;
-        font-size:12px; background:#f8f8f8; padding:8px;
-        border-radius:6px; border:1px solid #eee; overflow:auto;
+        font-size:12px; background:var(--code-background); padding:8px;
+        border-radius:6px; border:1px solid var(--border-color); overflow:auto;
+        color: var(--body-text);
     }
 </style>
 
@@ -420,10 +433,10 @@
     <div class="toolbar">
         <label>年份：
             <input type="range" min="1750" max="2024" step="1" bind:value={year} on:input={onYearInput} />
-            <strong style="margin-left:6px">{year}</strong>
+            <strong class="year-value">{year}</strong>
         </label>
 
-        <label style="margin-left:16px">
+        <label class="mask-select">
             掩膜：
             <select bind:value={maskMode} on:change={() => debounce(refreshOverlay, 120)}>
                 <option value="land">陆地</option>
@@ -431,12 +444,12 @@
             </select>
         </label>
 
-        {#if loading}<span style="margin-left:12px;color:#888">加载中…</span>{/if}
+        {#if loading}<span class="loading">加载中…</span>{/if}
 
         {#if errorMsg}
             <span class="error-tip">错误：{errorMsg}</span>
             {#if errorDetail}
-                <details style="margin-left:12px">
+                <details class="error-detail">
                     <summary>详细信息</summary>
                     <pre>{errorDetail}</pre>
                 </details>
