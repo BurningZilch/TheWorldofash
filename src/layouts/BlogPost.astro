@@ -39,6 +39,9 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				color: var(--body-text);
 				transition: color 0.3s ease;
 			}
+			.comments {
+				margin-top: 3em;
+			}
 			.title {
 				margin-bottom: 1em;
 				padding: 1em 0;
@@ -81,8 +84,74 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 						<hr />
 					</div>
 					<slot />
-				</div>
-			</article>
+					<section class="comments">
+						<script is:inline src="https://giscus.app/client.js"
+							data-repo="BurningZilch/TheWorldofash"
+							data-repo-id="R_kgDOPwB-SA"
+							data-category="Blog comments"
+							data-category-id="DIC_kwDOPwB-SM4CwRar"
+							data-mapping="pathname"
+							data-strict="0"
+							data-reactions-enabled="1"
+							data-emit-metadata="0"
+							data-input-position="bottom"
+							data-theme="preferred_color_scheme"
+							data-lang="en"
+							crossorigin="anonymous"
+							async>
+						</script>
+						<script is:inline>
+							const GISCUS_ORIGIN = 'https://giscus.app';
+							const MAX_ATTEMPTS = 60;
+							let attempts = 0;
+
+							const getSiteTheme = () =>
+								document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+							const updateGiscusTheme = () => {
+								const iframe = document.querySelector('iframe.giscus-frame');
+								if (!iframe) return false;
+
+								iframe.contentWindow?.postMessage(
+									{
+										giscus: {
+											setConfig: {
+												theme: getSiteTheme(),
+											},
+										},
+									},
+									GISCUS_ORIGIN
+								);
+
+								return true;
+							};
+
+							const waitForGiscus = () => {
+								if (updateGiscusTheme()) return;
+								if (attempts > MAX_ATTEMPTS) return;
+								attempts += 1;
+								requestAnimationFrame(waitForGiscus);
+							};
+
+							const observer = new MutationObserver((mutations) => {
+								for (const mutation of mutations) {
+									if (mutation.attributeName === 'data-theme') {
+										updateGiscusTheme();
+										break;
+									}
+								}
+							});
+
+							if (typeof document !== 'undefined') {
+								observer.observe(document.documentElement, { attributes: true });
+								waitForGiscus();
+
+								window.addEventListener('astro:beforeunload', () => observer.disconnect());
+							}
+						</script>
+					</section>
+					</div>
+				</article>
 		</main>
 		<Footer />
 	</body>

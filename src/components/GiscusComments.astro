@@ -1,0 +1,78 @@
+---
+const {
+  PUBLIC_GISCUS_REPO,
+  PUBLIC_GISCUS_REPO_ID,
+  PUBLIC_GISCUS_CATEGORY,
+  PUBLIC_GISCUS_CATEGORY_ID,
+  PUBLIC_GISCUS_MAPPING,
+  PUBLIC_GISCUS_STRICT,
+  PUBLIC_GISCUS_REACTIONS_ENABLED,
+  PUBLIC_GISCUS_EMIT_METADATA,
+  PUBLIC_GISCUS_INPUT_POSITION,
+  PUBLIC_GISCUS_THEME,
+  PUBLIC_GISCUS_LANG,
+  PUBLIC_GISCUS_LOADING,
+} = import.meta.env;
+
+const config = {
+  repo: PUBLIC_GISCUS_REPO,
+  repoId: PUBLIC_GISCUS_REPO_ID,
+  category: PUBLIC_GISCUS_CATEGORY,
+  categoryId: PUBLIC_GISCUS_CATEGORY_ID,
+  mapping: PUBLIC_GISCUS_MAPPING ?? 'pathname',
+  strict: PUBLIC_GISCUS_STRICT ?? '0',
+  reactionsEnabled: PUBLIC_GISCUS_REACTIONS_ENABLED ?? '1',
+  emitMetadata: PUBLIC_GISCUS_EMIT_METADATA ?? '0',
+  inputPosition: PUBLIC_GISCUS_INPUT_POSITION ?? 'bottom',
+  theme: PUBLIC_GISCUS_THEME ?? 'preferred_color_scheme',
+  lang: PUBLIC_GISCUS_LANG ?? 'en',
+  loading: PUBLIC_GISCUS_LOADING ?? 'lazy',
+};
+
+const isConfigured = Boolean(
+  config.repo && config.repoId && config.category && config.categoryId,
+);
+---
+
+<section id="comments" class="giscus-comments" aria-label="Comments">
+  {isConfigured && (
+    <>
+      <script
+        src="https://giscus.app/client.js"
+        data-repo={config.repo}
+        data-repo-id={config.repoId}
+        data-category={config.category}
+        data-category-id={config.categoryId}
+        data-mapping={config.mapping}
+        data-strict={config.strict}
+        data-reactions-enabled={config.reactionsEnabled}
+        data-emit-metadata={config.emitMetadata}
+        data-input-position={config.inputPosition}
+        data-theme={config.theme}
+        data-lang={config.lang}
+        data-loading={config.loading}
+        crossorigin="anonymous"
+        async
+      ></script>
+      <noscript>Enable JavaScript to view the comments powered by Giscus.</noscript>
+    </>
+  )}
+  {!isConfigured && import.meta.env.DEV && (
+    <p class="giscus-placeholder">
+      Set PUBLIC_GISCUS_* variables in your environment to enable comments.
+    </p>
+  )}
+</section>
+
+<style>
+  .giscus-comments {
+    margin: 4rem auto 0;
+    max-width: 720px;
+    padding: 0 1rem;
+  }
+
+  .giscus-placeholder {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+</style>
