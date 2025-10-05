@@ -56,6 +56,9 @@ import ThemeToggle from './ThemeToggle.svelte';
     background: var(--surface);
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
@@ -120,18 +123,35 @@ import ThemeToggle from './ThemeToggle.svelte';
     color: var(--accent);
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 768px) {
+    nav {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        'title actions'
+        'links links';
+      align-items: center;
+      gap: 0.5rem 1rem;
+    }
+
+    h2 {
+      grid-area: title;
+    }
+
+    .header-actions {
+      grid-area: actions;
+      justify-self: end;
+      gap: 0.5rem;
+    }
+
     .internal-links {
+      grid-area: links;
       width: 100%;
       justify-content: space-around;
     }
 
     .social-links {
       display: none;
-    }
-
-    .header-actions {
-      gap: 0.5rem;
     }
   }
 </style>
