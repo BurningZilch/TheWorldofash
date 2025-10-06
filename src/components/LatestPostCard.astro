@@ -3,11 +3,12 @@ import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog');
 const latest = posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())[0];
+const latestSlug = latest?.slug ?? latest?.id;
 ---
 
 <section class="featured prose">
     <h2>Latest Post</h2>
-    <a href={`/blog/${latest.slug}`} class="card">
+    <a href={latestSlug ? `/blog/${latestSlug}/` : '/blog/'} class="card">
         <img
                 src={latest.data.thumbnailimg?.src}
                 alt={latest.data.title}

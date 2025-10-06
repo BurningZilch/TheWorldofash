@@ -51,6 +51,32 @@
 	--divider-color: rgba(70, 70, 70, 0.75);
 	--code-background: rgba(20, 20, 20, 0.95);
 }
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme]) {
+		color-scheme: dark;
+		--accent: #8aa9ff;
+		--accent-dark: #4b61ff;
+		--black: 237, 242, 255;
+		--gray: 165, 180, 203;
+		--gray-light: 82, 82, 82;
+		--gray-dark: 226, 232, 240;
+		--gray-gradient: rgba(8, 8, 8, 0.95), #000000;
+		--box-shadow:
+			0 2px 14px rgba(0, 0, 0, 0.6), 0 16px 36px rgba(0, 0, 0, 0.55), 0 28px 56px
+			rgba(0, 0, 0, 0.5);
+		--surface: #050505;
+		--surface-elevated: rgba(15, 15, 15, 0.92);
+		--body-background: linear-gradient(var(--gray-gradient)) no-repeat;
+		--body-background-solid: #000000;
+		--body-text: rgb(var(--gray-dark));
+		--heading-color: rgb(var(--black));
+		--text-muted: rgba(180, 184, 194, 0.85);
+		--border-color: rgba(60, 60, 60, 0.7);
+		--divider-color: rgba(70, 70, 70, 0.75);
+		--code-background: rgba(20, 20, 20, 0.95);
+	}
+}
 @font-face {
 	font-family: "Atkinson";
 	src: url("/fonts/atkinson-regular.woff") format("woff");
