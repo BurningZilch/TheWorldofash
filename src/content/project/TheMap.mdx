@@ -7,10 +7,10 @@ pubDate: Sep 29 2025
 > Drag the map, zoom, and scrub the year slider to explore temperature anomalies (°C).
 
 {/* WeatherMap temporarily disabled until Nov 1, 2025 */}
-{/* import WeatherMap from '../../components/WeatherMap.svelte'; */}
+import WeatherMap from '../../components/WeatherMap.svelte';
 
 <div class="notice">
-  <h2>Temporary Notice (October 4, 2025)</h2>
+  <h2>Temporary Notice (October 8, 2025)</h2>
   <p>
     Our data backend has reached its traffic limits, so the interactive Weather Map is temporarily paused.
     I am currently optimizing query logic and caching to make the dataset more sustainable under load.
@@ -18,6 +18,7 @@ pubDate: Sep 29 2025
   <p>
     Please check back on <strong>November 1, 2025</strong>. Thank you for your patience!
   </p>
+![sad](../../assets/img/aws_free.png)
   <details>
     <summary>Why is this happening?</summary>
     <p>
@@ -26,8 +27,7 @@ pubDate: Sep 29 2025
     </p>
   </details>
 </div>
-
-{/* Disabled block — keep for later restore
+{/*
 <div class="full-bleed">
   <WeatherMap client:load minHeight="min(80vh, 900px)" />
 </div>

@@ -20,6 +20,8 @@
     let loading = false;
     let errorMsg: string | null = null;
     let errorDetail: string | null = null;
+    let autoRefreshEnabled = true;
+    let autoRefreshNotice: string | null = null;
 
     const OVERLAY_ID = "anomaly-tile";
     const OVERLAY_SRC_ID = "anomaly-src";
@@ -39,6 +41,13 @@
     type CacheEntry = { image: ImageData; width: number; height: number; bounds: Bounds; pxPerCell: number };
     const tileCache = new Map<string, CacheEntry>();
     let currentKey: string | null = null;
+
+    type ViewDescriptor = {
+        bbox: Bounds;
+        key: string;
+        pxPerCell: number;
+        timeIndex: number;
+    };
 
     // ------- 调试：记录最近一次 API 请求与响应 -------
     type LastApi = {
@@ -128,9 +137,35 @@
 
     // 防抖
     let debounceTimer: number | null = null;
+    function cancelDebounce() {
+        if (debounceTimer) {
+            window.clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+    }
     function debounce(fn: () => void, ms = 200) {
-        if (debounceTimer) window.clearTimeout(debounceTimer);
-        debounceTimer = window.setTimeout(fn, ms);
+        cancelDebounce();
+        debounceTimer = window.setTimeout(() => {
+            debounceTimer = null;
+            fn();
+        }, ms);
+    }
+
+    function disableAutoRefresh(reason = "拖动地图后需手动刷新。") {
+        if (!autoRefreshEnabled) return;
+        autoRefreshEnabled = false;
+        autoRefreshNotice = reason;
+        cancelDebounce();
+    }
+
+    function requestAutoRefresh(delay = 120) {
+        if (!autoRefreshEnabled) return;
+        debounce(() => refreshOverlay(), delay);
+    }
+
+    function manualRefresh() {
+        loading = true;
+        refreshOverlay();
     }
 
     // 5° 对齐
@@ -281,29 +316,40 @@
     }
 
     // 核心刷新流程
-    async function refreshOverlay() {
-        if (!map || !overlayCtx) return;
-
-        loading = true; errorMsg = null; errorDetail = null;
-
-        // 计算 bbox：对齐 + 夹紧
+    function describeCurrentView(): ViewDescriptor | null {
+        if (!map) return null;
         const b = map.getBounds();
         const snapped = snapBBoxTo5deg([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
         const bbox = clampBBoxToWorld(snapped);
-
-        // 像素密度
         const pxPerCell = pxPerCellForZoom(map.getZoom() ?? 3);
-
-        // year → time_index（/info 未加载成功时退回 0）
         const timeIndex = pickTimeIndexFromYear(year);
+        return { bbox, key: cacheKey(bbox, timeIndex, maskMode), pxPerCell, timeIndex };
+    }
 
-        const key = cacheKey(bbox, timeIndex, maskMode);
-        const cached = tileCache.get(key);
-        if (cached && cached.pxPerCell === pxPerCell) {
-            paintToOverlayCanvas(cached);
-            ensureCanvasSource(cached);
-            currentKey = key;
-            loading = false;
+    function useCachedOverlayIfPossible(view?: ViewDescriptor): boolean {
+        if (!overlayCtx) return false;
+        const descriptor = view ?? describeCurrentView();
+        if (!descriptor) return false;
+        const cached = tileCache.get(descriptor.key);
+        if (!cached) return false;
+        paintToOverlayCanvas(cached);
+        ensureCanvasSource(cached);
+        currentKey = descriptor.key;
+        loading = false;
+        return true;
+    }
+
+    async function refreshOverlay(options: { force?: boolean } = {}) {
+        if (!map || !overlayCtx) return;
+
+        const view = describeCurrentView();
+        if (!view) return;
+
+        const { bbox, key, pxPerCell, timeIndex } = view;
+
+        loading = true; errorMsg = null; errorDetail = null;
+
+        if (!options.force && useCachedOverlayIfPossible(view)) {
             return;
         }
 
@@ -477,8 +523,15 @@
             await loadInfoOnce().catch(()=>{});
             refreshOverlay();
         });
-        map.on("moveend", () => debounce(refreshOverlay, 120));
-        map.on("zoomend", () => debounce(refreshOverlay, 120));
+        map.on("moveend", () => {
+            const hadCache = useCachedOverlayIfPossible();
+            if (!hadCache) requestAutoRefresh(120);
+        });
+        map.on("zoomend", () => {
+            const hadCache = useCachedOverlayIfPossible();
+            if (!hadCache) requestAutoRefresh(120);
+        });
+        map.on("dragstart", () => disableAutoRefresh());
 
         map.on("error", (ev: any) => {
             const mlErr = ev?.error || ev;
@@ -544,6 +597,19 @@
     .year-value { margin-left:6px; }
     .error-tip { color:#ff5d5d; margin-left:12px; font-weight:600; }
     .error-detail { margin-left:12px; }
+    .manual-refresh-btn {
+        margin-left:12px; padding:6px 12px;
+        border-radius:6px; border:1px solid var(--border-color);
+        background: var(--surface-elevated);
+        color: var(--body-text); cursor:pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .manual-refresh-btn:disabled {
+        opacity:0.6; cursor: not-allowed;
+    }
+    .auto-disabled-note {
+        margin-left:12px; color: var(--text-muted); font-size:13px;
+    }
     details summary { cursor: pointer; user-select: none; }
     details pre {
         max-width: 100%; white-space: pre-wrap;
@@ -580,6 +646,14 @@
         </label>
 
         {#if loading}<span class="loading">加载中…</span>{/if}
+
+        <button class="manual-refresh-btn" type="button" on:click={manualRefresh} disabled={loading}>
+            刷新数据
+        </button>
+
+        {#if !autoRefreshEnabled && autoRefreshNotice}
+            <span class="auto-disabled-note">{autoRefreshNotice}</span>
+        {/if}
 
         {#if errorMsg}
             <span class="error-tip">错误：{errorMsg}</span>
