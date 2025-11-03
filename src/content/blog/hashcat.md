@@ -57,7 +57,9 @@ Old **.doc** files (Word 97–2003) use a CryptoAPI-based scheme that derives an
   DocOld2010.doc:$oldoffice$1*d6aabb63363188b9b73a88efb9c9152e*afbbb9254764273f8f4fad9a5d82981f*6f09fd2eafc4ade522b5f2bee0eaf66d:::::DocOld2010.doc
   ```
   The hash value in this example is 
+  ```
   $oldoffice$1*d6aabb63363188b9b73a88efb9c9152e*afbbb9254764273f8f4fad9a5d82981f*6f09fd2eafc4ade522b5f2bee0eaf66d
+  ```
   
   Copy the hash value of target file into a file called hash
   
