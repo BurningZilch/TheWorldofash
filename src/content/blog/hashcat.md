@@ -57,6 +57,7 @@ Old **.doc** files (Word 97–2003) use a CryptoAPI-based scheme that derives an
   DocOld2010.doc:$oldoffice$1*d6aabb63363188b9b73a88efb9c9152e*afbbb9254764273f8f4fad9a5d82981f*6f09fd2eafc4ade522b5f2bee0eaf66d:::::DocOld2010.doc
   ```
   The hash value in this example is 
+  
   ```
   $oldoffice$1*d6aabb63363188b9b73a88efb9c9152e*afbbb9254764273f8f4fad9a5d82981f*6f09fd2eafc4ade522b5f2bee0eaf66d
   ```
@@ -106,7 +107,7 @@ After about 45 minutes, a hash.rc4 file will be generated, which contains the in
 Then use this to perfume the attack on it
 
 ```
-./oclHashcat64.bin -m 9720 hash.rc4 -a 3 -w 3 ?a?a?a?a?a?a
+hashcat -m 9720 hash.rc4 -a 3 -w 3 ?a?a?a?a?a?a
 ```
 
 If unlucky, add one more ?a to brute force with more characters.
@@ -118,7 +119,7 @@ After you got this, you can enter the result to the word document and check your
 Noticed this is not the original password, but it will get the same result with the hash so the word document will accecpt it. If you wish for more result (which might contains the original password), you may try this command
 
 ```
-./oclHashcat64.bin -m 9720 hash.rc4 -a 3 -w 3 ?a?a?a?a?a?a --keep-guessing
+hashcat -m 9720 hash.rc4 -a 3 -w 3 ?a?a?a?a?a?a --keep-guessing
 ```
 
 Thanks for reading—feel free to leave a comment!
