@@ -1,25 +1,9 @@
 ---
 title: Weather Map with Other datas
-description: Check the weather in history and how it effect around other things
+description: Check the weather in history 
 pubDate: Sep 29 2025
 ---
 
-> This project is under active development. The interactive Weather Map is temporarily unavailable.
+import WeatherMap from "../../components/WeatherMap.svelte";
 
-<div class="notice">
-  <h2>Project Status</h2>
-  <p>
-    This project is currently under development. The interactive Weather Map and related datasets
-    are being rebuilt and optimized.
-  </p>
-  <p>Thank you for your patience!</p>
-  <img src="../../assets/img/aws_free.png" alt="temporary notice" />
-  <details>
-    <summary>More info</summary>
-    <p>
-      We’re improving data pipelines, caching, and client performance before re-enabling the map.
-    </p>
-  </details>
-</div>
-
-{/* Interactive map will return once development stabilizes. */}
+<WeatherMap client:only="svelte" minHeight="80vh" />

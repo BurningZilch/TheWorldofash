@@ -1,9 +1,9 @@
 ---
-import { Image } from 'astro:assets';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import BaseHead from '../components/BaseHead.astro';
-import GoogleTag from '../components/GoogleTag.astro';
+import { Image } from "astro:assets";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import BaseHead from "../components/BaseHead.astro";
+import GoogleTag from "../components/GoogleTag.astro";
 
 type Props = {
   title: string;
@@ -16,10 +16,11 @@ const { title, description, heroImage } = Astro.props;
 <html lang="en">
   <head>
     <GoogleTag />
-    <BaseHead title={title} description={description} />
+    <BaseHead title={title} description={description || ""} />
     <style>
       main {
         width: 100%;
+        max-width: 1280px; /* Expanded from default for better map visibility */
         margin: 0 auto;
         padding: 1em;
       }
@@ -38,6 +39,7 @@ const { title, description, heroImage } = Astro.props;
       }
       .title h1 {
         margin: 0.2em 0;
+        font-size: 2.5rem;
       }
       .description {
         text-align: center;
@@ -51,11 +53,13 @@ const { title, description, heroImage } = Astro.props;
     <Header />
     <main>
       <article>
-        {heroImage && (
-          <div class="hero-image">
-            <Image width={1020} height={510} src={heroImage} alt="" />
-          </div>
-        )}
+        {
+          heroImage && (
+            <div class="hero-image">
+              <Image width={1020} height={510} src={heroImage} alt="" />
+            </div>
+          )
+        }
 
         <div class="title">
           <h1>{title}</h1>
@@ -70,4 +74,3 @@ const { title, description, heroImage } = Astro.props;
     <Footer />
   </body>
 </html>
-
