@@ -9,87 +9,20 @@
     let mapContainer: HTMLDivElement;
     let map: maplibregl.Map;
 
-    onMount(() => {
-        if (!mapContainer) return;
+    let timeIndex = 3310; // Latest time by default
+    let isPlaying = false;
+    let playInterval: any;
+    let currentTimeString = "Loading...";
 
-        map = new maplibregl.Map({
-            container: mapContainer,
-            // 使用 OpenFreeMap 的深色样式
-            style: "https://tiles.openfreemap.org/styles/positron",
-            center: [110, 0], // 初始中心点
-            zoom: 1.5, // 缩小一点以便看到整个地球
-            maxZoom: 20,
-            // 开启反锯齿，让球体边缘更平滑
-            canvasContextAttributes: { antialias: true },
-        });
+    async function loadWeatherData(index: number) {
+        try {
+            const response = await fetch(`/api/weather?timeIndex=${index}`);
+            const weatherData = await response.json();
+            currentTimeString = weatherData.metadata.time;
 
-        // 关键步骤：在样式加载完成后，将投影设置为 'globe'
-        map.on("style.load", () => {
-            map.setProjection({
-                type: "globe", // 开启球体投影
-            });
-        });
-
-        // 添加导航控件
-        map.addControl(new maplibregl.NavigationControl());
-
-        // 生成模拟天气数据（越靠近赤道越热）
-        const generateWeatherData = (count = 10000) => {
-            const features: any[] = [];
-            for (let i = 0; i < count; i++) {
-                const lng = Math.random() * 360 - 180;
-                const lat = Math.random() * 180 - 90;
-                // 模拟温度：赤道(0度)附近高，两极低。简单模拟 30度 - |lat|/3
-                // 加上一些随机波动
-                const baseTemp = 35 - Math.abs(lat) * 0.4;
-                const temp = baseTemp + (Math.random() * 10 - 5);
-                // 归一化 magnitude 0-1 用于 heatmap
-                // 假设范围 -10 到 40
-                const flow = Math.max(0, (temp + 10) / 50);
-
-                features.push({
-                    type: "Feature",
-                    properties: { mag: flow, temp: Math.round(temp) },
-                    geometry: { type: "Point", coordinates: [lng, lat] },
-                });
-            }
-            return { type: "FeatureCollection", features };
-        };
-
-        map.on("load", () => {
-            // 示例：添加一个连接中国和澳洲的“诈骗链路”线
-            map.addSource("scam-route", {
-                type: "geojson",
-                data: {
-                    type: "Feature",
-                    geometry: {
-                        type: "LineString",
-                        coordinates: [
-                            [116.4074, 39.9042], // 北京
-                            [151.2093, -33.8688], // 悉尼
-                        ],
-                    },
-                },
-            });
-
-            map.addLayer({
-                id: "route",
-                type: "line",
-                source: "scam-route",
-                layout: {
-                    "line-join": "round",
-                    "line-cap": "round",
-                },
-                paint: {
-                    "line-color": "#00ff00", // 黑客绿
-                    "line-width": 3,
-                    "line-opacity": 0.8,
-                },
-            });
-
-            // 2. Weather Heatmap (New)
-            if (!map.getSource("weather-data")) {
-                const weatherData = generateWeatherData(10000);
+            if (map && map.getSource("weather-data")) {
+                (map.getSource("weather-data") as any).setData(weatherData);
+            } else if (map) {
                 map.addSource("weather-data", {
                     type: "geojson",
                     data: weatherData,
@@ -102,7 +35,6 @@
                         source: "weather-data",
                         maxzoom: 9,
                         paint: {
-                            // Increase the heatmap weight based on frequency and property magnitude
                             "heatmap-weight": [
                                 "interpolate",
                                 ["linear"],
@@ -112,8 +44,6 @@
                                 1,
                                 1,
                             ],
-                            // Increase the heatmap color weight weight by zoom level
-                            // heatmap-intensity is a multiplier on top of heatmap-weight
                             "heatmap-intensity": [
                                 "interpolate",
                                 ["linear"],
@@ -123,9 +53,6 @@
                                 9,
                                 5,
                             ],
-                            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-                            // Begin color ramp at 0-stop with a 0-transparancy color
-                            // to create a blur-like effect.
                             "heatmap-color": [
                                 "interpolate",
                                 ["linear"],
@@ -143,52 +70,144 @@
                                 1,
                                 "rgb(178,24,43)",
                             ],
-                            // Adjust the heatmap radius by zoom level
                             "heatmap-radius": [
                                 "interpolate",
                                 ["linear"],
                                 ["zoom"],
                                 0,
-                                15,
+                                10,
                                 9,
-                                30,
+                                20,
                             ],
-                            // Transition from heatmap to circle layer by zoom level
                             "heatmap-opacity": [
                                 "interpolate",
                                 ["linear"],
                                 ["zoom"],
                                 7,
-                                1,
+                                0.8,
                                 9,
                                 0,
                             ],
                         },
                     },
                     "route",
-                ); // Put heatmap below the route line
+                );
             }
+        } catch (error) {
+            console.error("Failed to load weather data:", error);
+        }
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+            playInterval = setInterval(() => {
+                timeIndex = (timeIndex + 1) % 3311;
+                loadWeatherData(timeIndex);
+            }, 500); // Update every 500ms
+        } else {
+            clearInterval(playInterval);
+        }
+    }
+
+    function handleSliderChange(e: any) {
+        timeIndex = parseInt(e.target.value);
+        loadWeatherData(timeIndex);
+    }
+
+    onMount(() => {
+        if (!mapContainer) return;
+
+        map = new maplibregl.Map({
+            container: mapContainer,
+            style: "https://tiles.openfreemap.org/styles/positron",
+            center: [0, 0],
+            zoom: 1.5,
+            canvasContextAttributes: { antialias: true },
+        });
+
+        map.on("style.load", () => {
+            map.setProjection({ type: "globe" });
+        });
+
+        map.addControl(new maplibregl.NavigationControl());
+
+        map.on("load", () => {
+            // Restore missing route layer for the weather layer to depend on
+            if (!map.getSource("scam-route")) {
+                map.addSource("scam-route", {
+                    type: "geojson",
+                    data: {
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                            type: "LineString",
+                            coordinates: [
+                                [116.4074, 39.9042], // Beijing
+                                [151.2093, -33.8688], // Sydney
+                            ],
+                        },
+                    },
+                });
+
+                map.addLayer({
+                    id: "route",
+                    type: "line",
+                    source: "scam-route",
+                    layout: {
+                        "line-join": "round",
+                        "line-cap": "round",
+                    },
+                    paint: {
+                        "line-color": "#00ff00",
+                        "line-width": 3,
+                        "line-opacity": 0.8,
+                    },
+                });
+            }
+
+            loadWeatherData(timeIndex);
         });
     });
 
     onDestroy(() => {
         map?.remove();
+        if (playInterval) clearInterval(playInterval);
     });
 </script>
 
 <div class="map-wrap" style="height: {minHeight};">
     <div id="map" bind:this={mapContainer}></div>
+
+    <!-- Timeline Overlay -->
+
+    <div class="timeline-overlay">
+        <div class="time-info">
+            <span class="date">{currentTimeString}</span>
+            <button class="play-btn" on:click={togglePlay}>
+                {isPlaying ? "⏸ Pause" : "▶ Play"}
+            </button>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="3310"
+            value={timeIndex}
+            on:input={handleSliderChange}
+            class="slider"
+        />
+    </div>
 </div>
 
 <style>
     .map-wrap {
         position: relative;
         width: 100%;
-        /* If parent has no height, 100% is 0. We force it to at least minHeight */
         min-height: 500px;
         height: 100%;
-        border-radius: 8px;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
     #map {
@@ -196,8 +215,72 @@
         top: 0;
         bottom: 0;
         width: 100%;
-        /* 为了让“太空感”更强，我们甚至可以加一点星空背景（可选） */
-        /* 简单的 CSS 渐变模拟大气层 */
         background: radial-gradient(circle at center, #1a202c 0%, #000 100%);
+    }
+
+    .timeline-overlay {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        padding: 15px 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .time-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .date {
+        font-family: "Inter", sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #60a5fa;
+    }
+
+    .play-btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    .play-btn:hover {
+        background: #3b82f6;
+    }
+
+    .slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #3b82f6;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
     }
 </style>
