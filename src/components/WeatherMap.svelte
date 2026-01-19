@@ -13,10 +13,13 @@
     let isPlaying = false;
     let playInterval: any;
     let currentTimeString = "Loading...";
+    let viewMode: "land" | "global" = "land";
 
     async function loadWeatherData(index: number) {
         try {
-            const response = await fetch(`/api/weather?timeIndex=${index}`);
+            const response = await fetch(
+                `/api/weather?timeIndex=${index}&viewMode=${viewMode}`,
+            );
             const weatherData = await response.json();
             currentTimeString = weatherData.metadata.time;
 
@@ -110,6 +113,12 @@
         }
     }
 
+    function toggleViewMode(mode: "land" | "global") {
+        if (viewMode === mode) return;
+        viewMode = mode;
+        loadWeatherData(timeIndex);
+    }
+
     function handleSliderChange(e: any) {
         timeIndex = parseInt(e.target.value);
         loadWeatherData(timeIndex);
@@ -184,9 +193,23 @@
     <div class="timeline-overlay">
         <div class="time-info">
             <span class="date">{currentTimeString}</span>
-            <button class="play-btn" on:click={togglePlay}>
-                {isPlaying ? "⏸ Pause" : "▶ Play"}
-            </button>
+            <div class="controls">
+                <button
+                    class="view-toggle {viewMode === 'land' ? 'active' : ''}"
+                    on:click={() => toggleViewMode("land")}
+                >
+                    Land
+                </button>
+                <button
+                    class="view-toggle {viewMode === 'global' ? 'active' : ''}"
+                    on:click={() => toggleViewMode("global")}
+                >
+                    Global
+                </button>
+                <button class="play-btn" on:click={togglePlay}>
+                    {isPlaying ? "⏸ Pause" : "▶ Play"}
+                </button>
+            </div>
         </div>
         <input
             type="range"
@@ -239,6 +262,34 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .view-toggle {
+        background: rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .view-toggle.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+
+    .view-toggle:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
     }
 
     .date {

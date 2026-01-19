@@ -20,6 +20,7 @@
     "aws-amplify": "^6.15.6",
     "codex": "^0.2.3",
     "d3": "^7.9.0",
+    "d3-geo": "^3.1.1",
     "maplibre-gl": "^5.7.3",
     "sharp": "^0.34.4",
     "svelte": "^5.39.5",
@@ -28,5 +29,10 @@
     "typescript": "^5.9.2",
     "versor": "^0.0.4"
   },
-  "packageManager": "pnpm@10.18.0"
+  "packageManager": "pnpm@10.18.0",
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/d3-geo": "^3.1.0",
+    "@types/topojson-client": "^3.1.5"
+  }
 }

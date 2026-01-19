@@ -1,9 +1,13 @@
 import type { APIRoute } from 'astro';
+import { geoContains } from 'd3-geo';
+import * as topojson from 'topojson-client';
+
 
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const params = url.searchParams;
     const timeIndexStr = params.get('timeIndex');
+    const viewMode = params.get('viewMode') || 'land';
     const timeIndex = timeIndexStr ? parseInt(timeIndexStr) : 3310;
 
     // Time calculation simulating 1750 to 2025 (approx 3311 months)
@@ -25,8 +29,21 @@ export const GET: APIRoute = async ({ request }) => {
     const seasonPhase = (currentMonth - 1) / 12 * 2 * Math.PI;
     const seasonEffect = Math.sin(seasonPhase - Math.PI / 2); // Lowest in Jan, highest in July
 
+    // Load and parse topology
+    const response = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json');
+    const topology = await response.json();
+    const landGeoJSON = topojson.feature(topology, topology.objects.land);
+
     for (let lat = -90; lat <= 90; lat += step) {
         for (let lng = -180; lng < 180; lng += step) {
+            // Check if point is on land if viewMode is 'land'
+            if (viewMode === 'land') {
+                // geoContains returns true if the point [lng, lat] is inside the feature
+                if (!geoContains(landGeoJSON, [lng, lat])) {
+                    continue;
+                }
+            }
+
             // Base temp depends on latitude
             const baseTemp = 30 - Math.abs(lat) * 0.6;
 
