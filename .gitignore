@@ -23,3 +23,6 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 zarr/
+
+# AWS Amplify hosting artifacts
+.amplify-hosting/

@@ -8,14 +8,12 @@ import sentry from '@sentry/astro';
 import spotlightjs from '@spotlightjs/astro';
 import svelte from "@astrojs/svelte";
 
-import node from '@astrojs/node';
+import awsAmplify from 'astro-aws-amplify';
 
 // https://astro.build/config
 export default defineConfig({
     site: 'https://example.com',
     output: 'server',
-    adapter: node({
-        mode: 'standalone'
-    }),
+    adapter: awsAmplify(),
     integrations: [mdx(), sitemap(), sentry(), spotlightjs(), svelte()],
 });
