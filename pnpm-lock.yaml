@@ -50,9 +50,6 @@ importers:
       maplibre-gl:
         specifier: ^5.7.3
         version: 5.8.0
-      sharp:
-        specifier: ^0.34.4
-        version: 0.34.4
       svelte:
         specifier: ^5.39.5
         version: 5.39.5
@@ -4989,7 +4986,8 @@ snapshots:
   '@esbuild/win32-x64@0.25.10':
     optional: true
 
-  '@img/colour@1.0.0': {}
+  '@img/colour@1.0.0':
+    optional: true
 
   '@img/sharp-darwin-arm64@0.34.4':
     optionalDependencies:
@@ -7285,7 +7283,8 @@ snapshots:
 
   destroy@1.2.0: {}
 
-  detect-libc@2.1.0: {}
+  detect-libc@2.1.0:
+    optional: true
 
   deterministic-object-hash@2.0.2:
     dependencies:
@@ -9021,6 +9020,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.4
       '@img/sharp-win32-ia32': 0.34.4
       '@img/sharp-win32-x64': 0.34.4
+    optional: true
 
   shebang-command@2.0.0:
     dependencies:

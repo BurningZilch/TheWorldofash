@@ -2,7 +2,7 @@
 
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { defineConfig } from 'astro/config';
+import { defineConfig, passthroughImageService } from 'astro/config';
 
 import sentry from '@sentry/astro';
 import spotlightjs from '@spotlightjs/astro';
@@ -15,5 +15,8 @@ export default defineConfig({
     site: 'https://example.com',
     output: 'server',
     adapter: awsAmplify(),
+    image: {
+        service: passthroughImageService()
+    },
     integrations: [mdx(), sitemap(), sentry(), spotlightjs(), svelte()],
 });
