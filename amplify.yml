@@ -19,7 +19,7 @@ frontend:
         # Run Astro build
         - pnpm run build
   artifacts:
-    baseDirectory: .amplify-hosting
+    baseDirectory: dist
     files:
       - '**/*'
   cache:
