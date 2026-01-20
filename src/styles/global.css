@@ -1,82 +1,83 @@
 /*
-  The CSS in this style tag is based off of Bear Blog's default CSS.
-  https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
-  License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
+  The CSS in this style tag is based off of the Snow Treads Dark Clouds design.
  */
+
+/* Import Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');
 
 :root {
 	color-scheme: light;
-	--accent: #2337ff;
-	--accent-dark: #000d8a;
-	--black: 15, 18, 25;
-	--gray: 96, 115, 159;
-	--gray-light: 229, 233, 240;
-	--gray-dark: 34, 41, 57;
-	--gray-gradient: rgba(var(--gray-light), 50%), #fff;
+	/* Light Mode (Derrived/Inverted) */
+	--accent: #0288d1;
+	--accent-dark: #01579b;
+	--black: 26, 26, 26;
+	--gray: 117, 117, 117;
+	--gray-light: 245, 245, 245;
+	--gray-dark: 66, 66, 66;
+	--gray-gradient: rgba(255, 255, 255, 1), #f5f5f5;
 	--box-shadow:
-		0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%), 0 16px 32px
-		rgba(var(--gray), 33%);
+		0 2px 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
 	--surface: #ffffff;
-	--surface-elevated: rgba(255, 255, 255, 0.78);
-	--body-background: linear-gradient(var(--gray-gradient)) no-repeat;
-	--body-background-solid: #ffffff;
-	--body-text: rgb(var(--gray-dark));
-	--heading-color: rgb(var(--black));
-	--text-muted: rgb(var(--gray));
-	--border-color: rgba(208, 213, 223, 0.7);
-	--divider-color: rgb(var(--gray-light));
-	--code-background: rgb(var(--gray-light));
+	--surface-elevated: #fcfcfc;
+	--body-background: #f0f0f0;
+	--body-background-solid: #f0f0f0;
+	--body-text: #1a1a1a;
+	--heading-color: #0a0a0a;
+	--text-muted: #666666;
+	--border-color: rgba(0, 0, 0, 0.1);
+	--divider-color: rgba(0, 0, 0, 0.1);
+	--code-background: #e0e0e0;
 }
 
 :root[data-theme='dark'] {
 	color-scheme: dark;
-	--accent: #8aa9ff;
-	--accent-dark: #4b61ff;
-	--black: 237, 242, 255;
-	--gray: 165, 180, 203;
-	--gray-light: 82, 82, 82;
-	--gray-dark: 226, 232, 240;
-	--gray-gradient: rgba(8, 8, 8, 0.95), #000000;
-	--box-shadow:
-		0 2px 14px rgba(0, 0, 0, 0.6), 0 16px 36px rgba(0, 0, 0, 0.55), 0 28px 56px
-		rgba(0, 0, 0, 0.5);
-	--surface: #050505;
-	--surface-elevated: rgba(15, 15, 15, 0.92);
-	--body-background: linear-gradient(var(--gray-gradient)) no-repeat;
-	--body-background-solid: #000000;
-	--body-text: rgb(var(--gray-dark));
-	--heading-color: rgb(var(--black));
-	--text-muted: rgba(180, 184, 194, 0.85);
-	--border-color: rgba(60, 60, 60, 0.7);
-	--divider-color: rgba(70, 70, 70, 0.75);
-	--code-background: rgba(20, 20, 20, 0.95);
+	/* Dark Mode (Snow Treads Target) */
+	--accent: #81d4fa;
+	--accent-dark: #4ba3c7;
+	--black: 240, 240, 240;
+	--gray: 160, 160, 160;
+	--gray-light: 22, 22, 22;
+	--gray-dark: 200, 200, 200;
+	--gray-gradient: rgba(10, 10, 10, 0.95), #0a0a0a;
+	--box-shadow: 0 0 60px rgba(129, 212, 250, 0.1);
+	--surface: #161616; /* --bg-card */
+	--surface-elevated: #1a1a1a;
+	--body-background: #0a0a0a; /* --bg-primary */
+	--body-background-solid: #0a0a0a;
+	--body-text: #f0f0f0; /* --text-primary */
+	--heading-color: #f0f0f0;
+	--text-muted: #a0a0a0; /* --text-secondary */
+	--border-color: rgba(255, 255, 255, 0.06);
+	--divider-color: rgba(255, 255, 255, 0.06);
+	--code-background: #111111;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme]) {
 		color-scheme: dark;
-		--accent: #8aa9ff;
-		--accent-dark: #4b61ff;
-		--black: 237, 242, 255;
-		--gray: 165, 180, 203;
-		--gray-light: 82, 82, 82;
-		--gray-dark: 226, 232, 240;
-		--gray-gradient: rgba(8, 8, 8, 0.95), #000000;
-		--box-shadow:
-			0 2px 14px rgba(0, 0, 0, 0.6), 0 16px 36px rgba(0, 0, 0, 0.55), 0 28px 56px
-			rgba(0, 0, 0, 0.5);
-		--surface: #050505;
-		--surface-elevated: rgba(15, 15, 15, 0.92);
-		--body-background: linear-gradient(var(--gray-gradient)) no-repeat;
-		--body-background-solid: #000000;
-		--body-text: rgb(var(--gray-dark));
-		--heading-color: rgb(var(--black));
-		--text-muted: rgba(180, 184, 194, 0.85);
-		--border-color: rgba(60, 60, 60, 0.7);
-		--divider-color: rgba(70, 70, 70, 0.75);
-		--code-background: rgba(20, 20, 20, 0.95);
+		/* Dark Mode (Snow Treads Target) - same as above */
+		--accent: #81d4fa;
+		--accent-dark: #4ba3c7;
+		--black: 240, 240, 240;
+		--gray: 160, 160, 160;
+		--gray-light: 22, 22, 22;
+		--gray-dark: 200, 200, 200;
+		--gray-gradient: rgba(10, 10, 10, 0.95), #0a0a0a;
+		--box-shadow: 0 0 60px rgba(129, 212, 250, 0.1);
+		--surface: #161616;
+		--surface-elevated: #1a1a1a;
+		--body-background: #0a0a0a;
+		--body-background-solid: #0a0a0a;
+		--body-text: #f0f0f0;
+		--heading-color: #f0f0f0;
+		--text-muted: #a0a0a0;
+		--border-color: rgba(255, 255, 255, 0.06);
+		--divider-color: rgba(255, 255, 255, 0.06);
+		--code-background: #111111;
 	}
 }
+
+/* Local Font Config - Retaining Atkinson for backup but preferring Noto */
 @font-face {
 	font-family: "Atkinson";
 	src: url("/fonts/atkinson-regular.woff") format("woff");
@@ -91,110 +92,147 @@
 	font-style: normal;
 	font-display: swap;
 }
+
 body {
-	font-family: "Atkinson", sans-serif;
+	font-family: "Noto Sans SC", "Atkinson", sans-serif;
 	margin: 0;
 	padding: 0;
 	text-align: left;
 	background: var(--body-background);
 	background-color: var(--body-background-solid);
-	background-size: 100% 600px;
-	word-wrap: break-word;
-	overflow-wrap: break-word;
 	color: var(--body-text);
 	font-size: 20px;
-	line-height: 1.7;
+	line-height: 1.8;
 	transition: background 0.3s ease, color 0.3s ease;
 }
+
 main {
-	width: 720px;
+	width: 800px;
 	max-width: calc(100% - 2em);
 	margin: auto;
 	padding: 3em 1em;
 }
+
 .full-bleed {
 	width: 100vw;
 	margin-left: calc(50% - 50vw);
 	margin-right: calc(50% - 50vw);
 }
+
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
+	font-family: "Noto Serif SC", serif;
 	margin: 0 0 0.5rem 0;
 	color: var(--heading-color);
 	line-height: 1.2;
+    letter-spacing: 0.05em;
 }
+
 h1 {
 	font-size: 3.052em;
 }
+
 h2 {
 	font-size: 2.441em;
 }
+
 h3 {
 	font-size: 1.953em;
 }
+
 h4 {
 	font-size: 1.563em;
 }
+
 h5 {
 	font-size: 1.25em;
 }
+
 strong,
 b {
 	font-weight: 700;
 }
+
 a {
 	color: var(--accent);
+    text-decoration: none;
+    transition: all 0.2s ease;
 }
+
 a:hover {
-	color: var(--accent);
+	color: var(--accent-dark);
+    text-shadow: 0 0 10px rgba(129, 212, 250, 0.4);
 }
+
 p {
 	margin-bottom: 1em;
 }
+
 .prose p {
 	margin-bottom: 2em;
 }
+
 textarea {
 	width: 100%;
 	font-size: 16px;
+    background: var(--surface);
+    color: var(--body-text);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
 }
+
 input {
 	font-size: 16px;
+    background: var(--surface);
+    color: var(--body-text);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
 }
+
 table {
 	width: 100%;
 }
+
 img {
 	max-width: 100%;
 	height: auto;
 	border-radius: 8px;
 }
+
 code {
 	padding: 2px 5px;
 	background-color: var(--code-background);
 	border-radius: 2px;
+    font-family: monospace;
 }
+
 pre {
 	padding: 1.5em;
 	border-radius: 8px;
+    background-color: var(--code-background);
 }
+
 pre > code {
 	all: unset;
 }
+
 blockquote {
 	border-left: 4px solid var(--accent);
 	padding: 0 0 0 20px;
 	margin: 0px;
 	font-size: 1.333em;
+    color: var(--text-muted);
 }
+
 hr {
 	border: none;
 	border-top: 1px solid var(--divider-color);
 }
+
 @media (max-width: 720px) {
 	body {
 		font-size: 18px;
@@ -212,56 +250,55 @@ hr {
 	height: 1px;
 	width: 1px;
 	overflow: hidden;
-	/* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
 	clip: rect(1px 1px 1px 1px);
-	/* maybe deprecated but we need to support legacy browsers */
 	clip: rect(1px, 1px, 1px, 1px);
-	/* modern browsers, clip-path works inwards from each corner */
 	clip-path: inset(50%);
-	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
 }
 
-.name {
-  font-size: 2rem;     /* make your name big */
-  font-weight: bold;   /* make it stand out */
-  margin-left: 0.5rem; /* little spacing */
-}
-
-.name ruby {
-  margin: 0 0.2rem;    /* space between characters */
-}
-
-.name rt {
-  font-size: 0.6em;    /* keep furigana smaller */
-  color: var(--text-muted);
-}
-
- .hero {
-    text-align: center;
-    margin: 4rem 0 2rem;
-  }
-
-  .tagline {
-    font-size: 1.3rem;
-    color: var(--text-muted);
-  }
-
+/* Card Styling Update */
 .card {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.5rem;
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   background: var(--surface);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .card:hover {
   box-shadow: var(--box-shadow);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+/* Add accent frost effect on hover if supported */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--divider-color); 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card > * {
+    z-index: 1;
 }
 
 .card-image {
@@ -272,12 +309,13 @@ hr {
 }
 
 .card-content h3 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.5rem;
+  font-family: "Noto Serif SC", serif;
 }
 
 .card-content p {
   margin: 0 0 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
 }
 

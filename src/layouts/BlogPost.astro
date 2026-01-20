@@ -1,13 +1,14 @@
 ---
-import { Image } from 'astro:assets';
-import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import Header from '../components/Header.astro';
-import GoogleTag from '../components/GoogleTag.astro'
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import Header from "../components/Header.astro";
+import GoogleTag from "../components/GoogleTag.astro";
+import MouseEffect from "../components/MouseEffect.astro";
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<"blog">["data"];
 
 const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 ---
@@ -62,11 +63,21 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	</head>
 
 	<body>
+		<MouseEffect />
 		<Header />
-			<main>
+		<main>
 			<article>
 				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
+					{
+						heroImage && (
+							<Image
+								width={1020}
+								height={510}
+								src={heroImage}
+								alt=""
+							/>
+						)
+					}
 				</div>
 				<div class="prose">
 					<div class="title">
@@ -75,7 +86,8 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 							{
 								updatedDate && (
 									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
+										Last updated on{" "}
+										<FormattedDate date={updatedDate} />
 									</div>
 								)
 							}
@@ -85,7 +97,9 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 					</div>
 					<slot />
 					<section class="comments">
-						<script is:inline src="https://giscus.app/client.js"
+						<script
+							is:inline
+							src="https://giscus.app/client.js"
 							data-repo="BurningZilch/TheWorldofash"
 							data-repo-id="R_kgDOPwB-SA"
 							data-category="Blog comments"
@@ -98,18 +112,23 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 							data-theme="preferred_color_scheme"
 							data-lang="en"
 							crossorigin="anonymous"
-							async>
-						</script>
+							async></script>
 						<script is:inline>
-							const GISCUS_ORIGIN = 'https://giscus.app';
+							const GISCUS_ORIGIN = "https://giscus.app";
 							const MAX_ATTEMPTS = 60;
 							let attempts = 0;
 
 							const getSiteTheme = () =>
-								document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+								document.documentElement.getAttribute(
+									"data-theme",
+								) === "dark"
+									? "dark"
+									: "light";
 
 							const updateGiscusTheme = () => {
-								const iframe = document.querySelector('iframe.giscus-frame');
+								const iframe = document.querySelector(
+									"iframe.giscus-frame",
+								);
 								if (!iframe) return false;
 
 								iframe.contentWindow?.postMessage(
@@ -120,7 +139,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 											},
 										},
 									},
-									GISCUS_ORIGIN
+									GISCUS_ORIGIN,
 								);
 
 								return true;
@@ -133,25 +152,35 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 								requestAnimationFrame(waitForGiscus);
 							};
 
-							const observer = new MutationObserver((mutations) => {
-								for (const mutation of mutations) {
-									if (mutation.attributeName === 'data-theme') {
-										updateGiscusTheme();
-										break;
+							const observer = new MutationObserver(
+								(mutations) => {
+									for (const mutation of mutations) {
+										if (
+											mutation.attributeName ===
+											"data-theme"
+										) {
+											updateGiscusTheme();
+											break;
+										}
 									}
-								}
-							});
+								},
+							);
 
-							if (typeof document !== 'undefined') {
-								observer.observe(document.documentElement, { attributes: true });
+							if (typeof document !== "undefined") {
+								observer.observe(document.documentElement, {
+									attributes: true,
+								});
 								waitForGiscus();
 
-								window.addEventListener('astro:beforeunload', () => observer.disconnect());
+								window.addEventListener(
+									"astro:beforeunload",
+									() => observer.disconnect(),
+								);
 							}
 						</script>
 					</section>
-					</div>
-				</article>
+				</div>
+			</article>
 		</main>
 		<Footer />
 	</body>

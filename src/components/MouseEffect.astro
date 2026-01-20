@@ -1,0 +1,121 @@
+---
+
+---
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursor-dot"></div>
+
+<style>
+    /* Custom Cursor */
+    @media (pointer: fine) {
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--accent-cyan, #e0f7fa);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition:
+                transform 0.15s ease-out,
+                opacity 0.15s ease-out;
+            mix-blend-mode: difference;
+            top: 0;
+            left: 0;
+        }
+
+        .cursor-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--accent-cyan, #e0f7fa);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+        }
+
+        body:hover .cursor {
+            opacity: 1;
+        }
+    }
+
+    @media (pointer: coarse) {
+        .cursor,
+        .cursor-dot {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    // Custom Cursor Logic
+    const initCursor = () => {
+        const cursor = document.getElementById("cursor");
+        const cursorDot = document.getElementById("cursor-dot");
+
+        // Exit if elements don't exist (e.g. on mobile if hidden or conditionally rendered)
+        if (!cursor || !cursorDot) return;
+
+        let mouseX = 0,
+            mouseY = 0;
+        let cursorX = 0,
+            cursorY = 0;
+
+        const onMouseMove = (e: MouseEvent) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX - 2 + "px";
+            cursorDot.style.top = mouseY - 2 + "px";
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+
+        function animateCursor() {
+            // Need to check existence again if component unmounts/remounts logic is added later
+            if (!cursor) return;
+
+            cursorX += (mouseX - cursorX) * 0.15;
+            cursorY += (mouseY - cursorY) * 0.15;
+            cursor.style.left = cursorX - 10 + "px";
+            cursor.style.top = cursorY - 10 + "px";
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Cursor hover effects
+        const addHoverEffects = () => {
+            document
+                .querySelectorAll("a, button, .article-card")
+                .forEach((el) => {
+                    el.addEventListener("mouseenter", () => {
+                        if (cursor) {
+                            cursor.style.transform = "scale(1.5)";
+                            cursor.style.borderColor =
+                                "var(--text-primary, #f0f0f0)";
+                        }
+                    });
+                    el.addEventListener("mouseleave", () => {
+                        if (cursor) {
+                            cursor.style.transform = "scale(1)";
+                            cursor.style.borderColor =
+                                "var(--accent-cyan, #e0f7fa)";
+                        }
+                    });
+                });
+        };
+
+        addHoverEffects();
+
+        // Re-apply hover effects if DOM changes (optional, but good for SPA feel)
+        const observer = new MutationObserver(addHoverEffects);
+        observer.observe(document.body, { childList: true, subtree: true });
+    };
+
+    // Run on load
+    initCursor();
+
+    // Support for View Transitions if/when they are used
+    document.addEventListener("astro:page-load", initCursor);
+</script>

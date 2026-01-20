@@ -3,15 +3,37 @@ interface Props {
 	date: Date;
 }
 
-const { date } = Astro.props;
+const { date: rawDate } = Astro.props;
+
+let date;
+try {
+	date = rawDate instanceof Date ? rawDate : new Date(rawDate);
+	// Check for "Invalid Date"
+	if (isNaN(date.getTime())) {
+		console.error(`FormattedDate received invalid date value: ${rawDate}`);
+		date = null;
+	}
+} catch (e) {
+	console.error(`Error parsing date: ${e}`);
+	date = null;
+}
+
+if (!date) {
+	console.error("FormattedDate received undefined or invalid date!");
+	// Return a visible error or null in HTML to avoid crash
+}
 ---
 
-<time datetime={date.toISOString()}>
-	{
-		date.toLocaleDateString('en-us', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-		})
-	}
-</time>
+{
+	date ? (
+		<time datetime={date.toISOString()}>
+			{date.toLocaleDateString("en-us", {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			})}
+		</time>
+	) : (
+		<span>Invalid Date</span>
+	)
+}

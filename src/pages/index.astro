@@ -5,60 +5,63 @@ import Header from "../components/Header.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 import GoogleTag from "../components/GoogleTag.astro";
 import LatestPostCard from "../components/LatestPostCard.astro";
+import MouseEffect from "../components/MouseEffect.astro";
 ---
 
 <!doctype html>
 <html lang="en">
-<head>
-  <GoogleTag />
-  <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-</head>
-<body>
-<Header />
-<main class="home-main">
-  <!-- Hero Section -->
-  <section class="hero">
-    <h1>World of Ash</h1>
-    <p class="tagline">
-      A space for experiments, technology, ideas and creative problem-solving.
-    </p>
-  </section>
+  <head>
+    <GoogleTag />
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <MouseEffect />
+    <Header />
+    <main class="home-main">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>World of Ash</h1>
+        <p class="tagline">
+          A space for experiments, technology, ideas and creative
+          problem-solving.
+        </p>
+      </section>
 
-  <!-- Intro Section -->
-  <section class="intro prose">
-    <h2>About this site</h2>
-    <p>
-      World of Ash is a space for sharing my journey - thoughts, projects, and ideas
-      as they take shape.
-    </p>
-  </section>
+      <!-- Intro Section -->
+      <section class="intro prose">
+        <h2>About this site</h2>
+        <p>
+          World of Ash is a space for sharing my journey - thoughts, projects,
+          and ideas as they take shape.
+        </p>
+      </section>
 
-  <!-- Explore Section -->
-  <section class="highlights prose">
-    <h2>Explore</h2>
-    <ul>
-      <li><a href="/blog">Blog posts</a> - thoughts</li>
-      <li><a href="/project">Projects</a> - experiments</li>
-      <li><a href="/about">About</a> - who is behind</li>
-    </ul>
-  </section>
+      <!-- Explore Section -->
+      <section class="highlights prose">
+        <h2>Explore</h2>
+        <ul>
+          <li><a href="/blog">Blog posts</a> - thoughts</li>
+          <li><a href="/project">Projects</a> - experiments</li>
+          <li><a href="/about">About</a> - who is behind</li>
+        </ul>
+      </section>
 
-  <!-- Featured Post (component) -->
-  <LatestPostCard />
-</main>
-<Footer />
-<style>
-  .home-main {
-    padding-top: 1.5em;
-  }
+      <!-- Featured Post (component) -->
+      <LatestPostCard />
+    </main>
+    <Footer />
+    <style>
+      .home-main {
+        padding-top: 1.5em;
+      }
 
-  .home-main .hero {
-    margin: 1.5rem 0 2.5rem;
-  }
+      .home-main .hero {
+        margin: 1.5rem 0 2.5rem;
+      }
 
-  .home-main .hero h1 {
-    font-size: clamp(3.5rem, 7vw, 5rem);
-  }
-</style>
-</body>
+      .home-main .hero h1 {
+        font-size: clamp(3.5rem, 7vw, 5rem);
+      }
+    </style>
+  </body>
 </html>

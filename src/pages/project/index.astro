@@ -7,6 +7,7 @@ import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import FormattedDate from '../../components/FormattedDate.astro';
 import GoogleTag from '../../components/GoogleTag.astro';
+import MouseEffect from '../../components/MouseEffect.astro';
 
 const project_posts = (await getCollection('project')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -20,6 +21,7 @@ const project_posts = (await getCollection('project')).sort(
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
   <body>
+    <MouseEffect />
     <Header />
     <main>
       <section>
@@ -30,7 +32,7 @@ const project_posts = (await getCollection('project')).sort(
               <li>
                 <a href={`/project/${project.id}/`}>
                   {project.data.heroImage && (
-                    <Image hth={720} height={360} src={project.data.heroImage} alt="" />
+                    <Image width={720} height={360} src={project.data.heroImage} alt="" />
                   )}
                   <h4>{project.data.title}</h4>
 		  <!---		  <p class="date"> <FormattedDate date={project.data.pubDate} /> ---> 
