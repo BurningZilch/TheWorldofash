@@ -21,8 +21,7 @@ export default defineConfig({
     integrations: [
         mdx(),
         sitemap(),
-        // Only load Sentry if DSN is present
-        process.env.SENTRY_DSN ? sentry() : null,
+        sentry(),
         // Only load Spotlight in dev mode
         process.env.NODE_ENV === 'development' ? spotlightjs() : null,
         svelte()

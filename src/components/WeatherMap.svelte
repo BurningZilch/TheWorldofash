@@ -30,73 +30,78 @@
                     type: "geojson",
                     data: weatherData,
                 });
+            }
 
-                if (false) {
-                    map.addLayer(
-                        {
-                            id: "weather-heat",
-                            type: "heatmap",
-                            source: "weather-data",
-                            maxzoom: 9,
-                            paint: {
-                                "heatmap-weight": [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["get", "mag"],
-                                    0,
-                                    0,
-                                    1,
-                                    1,
-                                ],
-                                "heatmap-intensity": [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["zoom"],
-                                    0,
-                                    3,
-                                    9,
-                                    5,
-                                ],
-                                "heatmap-color": [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["heatmap-density"],
-                                    0,
-                                    "rgba(33,102,172,0)",
-                                    0.1,
-                                    "rgb(103,169,207)",
-                                    0.3,
-                                    "rgb(209,229,240)",
-                                    0.5,
-                                    "rgb(253,219,199)",
-                                    0.7,
-                                    "rgb(239,138,98)",
-                                    1,
-                                    "rgb(178,24,43)",
-                                ],
-                                "heatmap-radius": [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["zoom"],
-                                    0,
-                                    10,
-                                    9,
-                                    20,
-                                ],
-                                "heatmap-opacity": [
-                                    "interpolate",
-                                    ["linear"],
-                                    ["zoom"],
-                                    7,
-                                    0.8,
-                                    9,
-                                    0,
-                                ],
-                            },
+            if (map && !map.getLayer("weather-heat")) {
+                map.addLayer(
+                    {
+                        id: "weather-heat",
+                        type: "heatmap",
+                        source: "weather-data",
+                        maxzoom: 9,
+                        paint: {
+                            // Weight based on magnitude (0-1)
+                            "heatmap-weight": [
+                                "interpolate",
+                                ["linear"],
+                                ["get", "mag"],
+                                0,
+                                0,
+                                1,
+                                1,
+                            ],
+                            // Intensity scaling with zoom
+                            "heatmap-intensity": [
+                                "interpolate",
+                                ["linear"],
+                                ["zoom"],
+                                0,
+                                1,
+                                9,
+                                3,
+                            ],
+                            // Color ramp (Blue -> White -> Red)
+                            "heatmap-color": [
+                                "interpolate",
+                                ["linear"],
+                                ["heatmap-density"],
+                                0,
+                                "rgba(33,102,172,0)",
+                                0.2,
+                                "rgb(103,169,207)",
+                                0.4,
+                                "rgb(209,229,240)",
+                                0.6,
+                                "rgb(253,219,199)",
+                                0.8,
+                                "rgb(239,138,98)",
+                                1,
+                                "rgb(178,24,43)",
+                            ],
+                            // Radius adjustment to blend points better at low resolution
+                            "heatmap-radius": [
+                                "interpolate",
+                                ["exponential", 2],
+                                ["zoom"],
+                                0,
+                                15,
+                                9,
+                                300,
+                            ],
+                            // Opacity fade out
+                            "heatmap-opacity": [
+                                "interpolate",
+                                ["linear"],
+                                ["zoom"],
+                                0,
+                                0.7,
+                                9,
+                                0.5,
+                            ],
                         },
-                        "route",
-                    );
-                }
+                    },
+                    "route",
+                );
             }
         } catch (error) {
             console.error("Failed to load weather data:", error);
